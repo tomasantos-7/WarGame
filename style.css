@@ -1,4 +1,15 @@
-body
+body    
 {
+    background-color:rgb(255, 239, 208);
     font-family: 'Courier New', Courier, monospace;
+}
+
+canvas 
+{
+    display: block;
+}
+
+.dump{
+    display: block;
+    
 }
