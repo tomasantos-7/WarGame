@@ -28,9 +28,9 @@ function preload()
 }
 
 function setup() {
-  //createCanvas(1580, 650);
-  createCanvas(600, 600);
-  noiseDetail(9, 0.5);
+  createCanvas(1580, 650);
+  //createCanvas(600, 600);
+  noiseDetail(1, 0.5);
   cols = 10; // nº de colunas do array
   rows = 10; // nº de linhas do array
   // atribuição dos valores de "noise" para cada tipo de terreno
@@ -52,12 +52,14 @@ function draw() {
       if (noisevalue < plainsTerrain.maxHeight) {
         console.log('plains');
         //set(x, y, plainsTerrainImage);
-      }else if (noisevalue < forestTerrain.maxHeight) {
+      }
+      if (noisevalue >= plainsTerrain.maxHeight && noisevalue < forestTerrain.maxHeight) {
         console.log('forest');
         set(x, y, forestTerrainImage);
-      }else{
+      }
+      if (noisevalue >= forestTerrain.maxHeight && noisevalue < mountainsTerrain.maxHeight){
         console.log('mountains');
-        //set(x, y, mountainsTerrainImage);  
+        set(x, y, mountainsTerrainImage);  
       }
       
     }
