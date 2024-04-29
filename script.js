@@ -8,48 +8,65 @@ class TerrainType{
 
 // Tipos de Terreno
 let plainsTerrain;
-let hillsTerrain;
+let forestTerrain;
 let mountainsTerrain;
-//let terrainImage;
+let plainsTerrainImage;
+let forestTerrainImage;
+let mountainsTerrainImage;
 
+let terrainImage;
 
 let cols, rows;
-let scl = 0.1; // escala de "noise"
+let zoomFactor = 100; // escala de "noise"
 let noiseGrid = [];
 
+function preload()
+{
+  plainsTerrainImage = loadImage('assets/plains.png');
+  forestTerrainImage = loadImage('assets/forest.png');
+  mountainsTerrainImage = loadImage('assets/mountains.png');
+}
+
 function setup() {
-  createCanvas(2000, 650);
-  noiseDetail(9, 0.5)
+  createCanvas(1580, 650);
+  //createCanvas(600, 600);
+  noiseDetail(1, 0.5);
   cols = 10; // nº de colunas do array
   rows = 10; // nº de linhas do array
   // atribuição dos valores de "noise" para cada tipo de terreno
-  plainsTerrain = new TerrainType(0, 0.4);
-  hillsTerrain = new TerrainType(0.4, 0.7);
-  mountainsTerrain = new TerrainType(0.7, 1);
-
-  generateNoiseGrid();
+  plainsTerrain = new TerrainType(0.2, 0.4, plainsTerrainImage);
+  forestTerrain = new TerrainType(0.4, 0.7, forestTerrainImage);
+  mountainsTerrain = new TerrainType(0.7, 0.75, mountainsTerrainImage);
 }
 
-function generateNoiseGrid() {
-  for (let y = 0; y < rows; y++) {
-    noiseGrid[y] = [];
-    for (let x = 0; x < cols; x++) {
+
+function draw() {
+
+  for (x = 0; x < width; x++) {
+    //noiseGrid[y] = [];
+    for (y = 0; y < height; y++) {
       // Calcular o valor de Perlin noise para cada coordenada
-      noiseGrid[y][x] = noise(x * scl, y * scl);
-      noisevalue = noise(x * scl, y * scl);
+      //noiseGrid[y][x] = noise(x * scl, y * scl);
+      const noisevalue = noise(x / zoomFactor, y / zoomFactor);
 
       if (noisevalue < plainsTerrain.maxHeight) {
         console.log('plains');
-      }else if (noisevalue < hillsTerrain.maxHeight) {
-        console.log('hills');
-      }else{
-        console.log('mountains');
+        //set(x, y, plainsTerrainImage);
       }
-      //set(x, y, terrainImage);
+      if (noisevalue >= plainsTerrain.maxHeight && noisevalue < forestTerrain.maxHeight) {
+        console.log('forest');
+        set(x, y, forestTerrainImage);
+      }
+      if (noisevalue >= forestTerrain.maxHeight && noisevalue < mountainsTerrain.maxHeight){
+        console.log('mountains');
+        set(x, y, mountainsTerrainImage);  
+      }
+      
     }
   }
-  updatePixels();
-  let dump_map = noiseGrid.map((inner_arr)=>{return '[' + inner_arr.join(',') + ']'; })
-  document.body.innerText  = '[' + dump_map.join(',') + ']';
-}
 
+  updatePixels();
+  //let dump_map = noiseGrid.map((inner_arr)=>{return '[' + inner_arr.join(',') + ']'; })
+  //document.body.innerText  = '[' + dump_map.join(',') + ']';
+  
+}

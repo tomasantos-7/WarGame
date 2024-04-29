@@ -1,0 +1,8 @@
+29/04/2024
+
+-Demora muito tempo para carregar as imagens;
+-Como os valores estão espalhados pelo grid as imagens não estão a aparecer completas;
+
+Importante:
+
+-Descobrir como limitar a quantidade de valores gerados pelo perlin noise;
