@@ -1,72 +1,29 @@
-class TerrainType{
-  constructor(minHeight, maxHeight, Image){
-    this.minHeight = minHeight;
-    this.maxHeight = maxHeight;
-    this.Image = Image;
-  }
-}
+function draw(){
+  const canvas = document.getElementById("canvas1");
 
-// Tipos de Terreno
-let plainsTerrain;
-let forestTerrain;
-let mountainsTerrain;
-let plainsTerrainImage;
-let forestTerrainImage;
-let mountainsTerrainImage;
+// CANVAS SETUP E DESENHO DO GRID
 
-let terrainImage;
+  if (canvas.getContext) {
+    const ctx = canvas.getContext("2d");
 
-let cols, rows;
-let zoomFactor = 100; // escala de "noise"
-let noiseGrid = [];
+    for (let x = 0; x < 1600; x+=100) {
+      for (let y = 0; y < 800; y+=100) {
 
-function preload()
-{
-  plainsTerrainImage = loadImage('assets/plains.png');
-  forestTerrainImage = loadImage('assets/forest.png');
-  mountainsTerrainImage = loadImage('assets/mountains.png');
-}
+        ctx.strokeRect(x, y, 200, 200);
+        ctx.font = "20px serif";
+        ctx.fillText(x, x, y);
 
-function setup() {
-  createCanvas(1580, 650);
-  //createCanvas(600, 600);
-  noiseDetail(1, 0.5);
-  cols = 10; // nº de colunas do array
-  rows = 10; // nº de linhas do array
-  // atribuição dos valores de "noise" para cada tipo de terreno
-  plainsTerrain = new TerrainType(0.2, 0.4, plainsTerrainImage);
-  forestTerrain = new TerrainType(0.4, 0.7, forestTerrainImage);
-  mountainsTerrain = new TerrainType(0.7, 0.75, mountainsTerrainImage);
-}
+        
 
-
-function draw() {
-
-  for (x = 0; x < width; x++) {
-    //noiseGrid[y] = [];
-    for (y = 0; y < height; y++) {
-      // Calcular o valor de Perlin noise para cada coordenada
-      //noiseGrid[y][x] = noise(x * scl, y * scl);
-      const noisevalue = noise(x / zoomFactor, y / zoomFactor);
-
-      if (noisevalue < plainsTerrain.maxHeight) {
-        console.log('plains');
-        //set(x, y, plainsTerrainImage);
       }
-      if (noisevalue >= plainsTerrain.maxHeight && noisevalue < forestTerrain.maxHeight) {
-        console.log('forest');
-        set(x, y, forestTerrainImage);
-      }
-      if (noisevalue >= forestTerrain.maxHeight && noisevalue < mountainsTerrain.maxHeight){
-        console.log('mountains');
-        set(x, y, mountainsTerrainImage);  
-      }
-      
     }
+    //Teste, Icons no grid
+    const img = new Image();
+    img.addEventListener("load", () =>{
+        ctx.drawImage(img, 110, 125, 80, 60);
+    });
+    img.src = "assets/mountains.png";
   }
-
-  updatePixels();
-  //let dump_map = noiseGrid.map((inner_arr)=>{return '[' + inner_arr.join(',') + ']'; })
-  //document.body.innerText  = '[' + dump_map.join(',') + ']';
-  
 }
+
+window.addEventListener("load", draw);
