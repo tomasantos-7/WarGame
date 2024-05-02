@@ -1,12 +1,67 @@
 <html>
-    <head>
-        <meta charset="utf-8" />
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>WarGame</title>
-        <link rel="stylesheet" href="style.css">
-    </head>
-    <body id="dump">
-        <canvas id="canvas1" width="1600" height="800"></canvas>
-        <script src="script.js"></script>
-    </body>
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>terrain generation</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="script.js"></script>
+    <script src="https://kit.fontawesome.com/3577bc0d5a.js" crossorigin="anonymous"></script>
+</head>
+
+<body id="dump" onload="setup()">
+
+    <div class="tabResources">
+        <a id="food">Comida: </a>
+        <a id="wood">Madeira: </a>
+        <a id="stone">Pedra: </a>
+        <a id="gold">Ouro: </a>
+        <button onclick="userClicked()">Lumber Camp</button>
+    </div>
+
+    <canvas id="ui_map" width="1000" height="1000"></canvas>
+    <div style="display: none;">
+        <img id="texture" src="assets/scroll.png">
+        <!--this element contains <img> childs that are a collection of alternate textures-->
+        <div id="trees">
+            <img id="Tree1" src="assets/Tree1.png">
+            <img id="Tree2" src="assets/Tree2.png">
+            <img id="Tree3" src="assets/Tree3.png">
+            <img id="Tree4" src="assets/Tree4.png">
+        </div>
+        <div id="pines">
+            <img id="Pine1" src="assets/Pine1.png">
+            <img id="Pine2" src="assets/Pine2.png">
+            <img id="Pine3" src="assets/Pine3.png">
+        </div>
+        <div id="hills">
+            <img id="Hill1" src="assets/Hill1.png">
+            <img id="Hill2" src="assets/Hill2.png">
+            <img id="Hill3" src="assets/Hill3.png">
+        </div>
+        <div id="rocks">
+            <img id="Rock1" src="assets/Rock1.png">
+            <img id="Rock2" src="assets/Rock2.png">
+        </div>
+        <div id="castles">
+            <img id="Castle1" src="assets/Citadel.png">
+        </div>
+        <div id="lumber">
+            <img id="Lumber1" src="assets/Lumbermill.png">
+        </div>
+        <div id="quarry">
+            <img id="Quarry1" src="assets/Quarry.png">
+        </div>
+        <div id="bank">
+            <img id="Bank1" src="assets/Bank.png">
+        </div>
+        <div id="barracks">
+            <img id="Barracks1" src="assets/Barracks.png">
+        </div>
+    </div>
+
+    
+
+</body>
+
 </html>

@@ -6,3 +6,20 @@
 Importante:
 
 -Descobrir como limitar a quantidade de valores gerados pelo perlin noise;
+
+02/05/2024
+
+-Problemas anteriores resolvidos, foi removida as bibliotecas p5 em uso, de forma a ter um maior conhecimento de Javascript;
+-Foi fornecido um código pelo Orientador, que consiste num mapa gerado através de circulos. Esses circulos estão sobrepostos e desta forma as zonas que estão sobrepostas ficam com valores mais altos por exemplo:
+    -Supondo que o circulo esta dividido em partes, cada uma dessas partes tem um valor de 0.1, se for criado outro circulo e alguma parte do mesmo estiver sobreposta ao circulo anterior a zona sobreposta soma o valor dos dois (0.1 + 0.1 = 0.2) ou seja, naquela zona o valor é de 0.2, esses números são posteriormente utilizados para criar um heightMap;
+    -O heightMap é utilizado para criar os terrenos utilizando os valores do heightMap são definidos onde se localizam (planicies, florestas, rochas e montanhas);
+
+-A partir desse código eu adicionei as rochas que era um terreno originalmente em falta;
+-Com ajuda do Orientador desenvolvi um código, que cria o castelo do jogador assim que o mapa carregar;
+-Esse código reutiliza blocos de código utilizados anteriormente para desenhar os sprites dos terrenos no mapa, foi criada uma classe com caracteristicas das contruções o que tornou a criação do castelo mais fácil e simples;
+
+
+-Criei o código para gerar recursos dependendo das contruções existentes;
+-Criei também uma função que encarrega-se de definir as variaveis da classe buildings para contruir;
+
+-Problemas com o placement das contruções e ao contruir uma nova construção só os recursos que essa construção gera é que são incrementados se existirem mais construções o incremento para. 
