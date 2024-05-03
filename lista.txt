@@ -22,4 +22,13 @@ Importante:
 -Criei o código para gerar recursos dependendo das contruções existentes;
 -Criei também uma função que encarrega-se de definir as variaveis da classe buildings para contruir;
 
--Problemas com o placement das contruções e ao contruir uma nova construção só os recursos que essa construção gera é que são incrementados se existirem mais construções o incremento para. 
+Resolver: Problemas com o placement das contruções e ao contruir uma nova construção só os recursos que essa construção gera é que são incrementados se existirem mais construções o incremento para. 
+
+
+03/05/2024
+
+Problemas resolvidos:
+    -Construção de construções.
+    -Incremento de recusos.
+Foram criadas variaveis dentro das classes e cada uma identifica a construção ou o recurso. Desta maneira foi mais fácil de construir o código e estruturá-lo.
+Para a resolução dos recursos, sempre que um edificio é construido, é criado um novo objeto que guarda as suas propriedades desta forma evitou-se o "overwriting" do objeto o que causava uma duplicação dos recursos.

@@ -234,7 +234,7 @@
                         ctx.fillStyle = `rgb(255 0 0 / ${map[x][y].elevation * 100}%)`;
                     ctx.fillRect(x * CELL_WIDTH, y * CELL_HEIGHT, CELL_WIDTH, CELL_HEIGHT);
                 }
-        }
+        }   
 
     </script>
     <style>
@@ -260,7 +260,7 @@
             right: 0px;
             padding: 20px;
             display: flex;
-            justify-content: end;
+            justify-content: start;
             gap: 20px;
             z-index: 1;
         }
@@ -280,7 +280,6 @@
             border-radius: 255px 15px 225px 15px/15px 225px 15px 255px;
             background-color: #E6CA8E;
             padding: 2px 20px;
-
 
         }
 
@@ -302,6 +301,42 @@
             left: auto;
             transform: rotate(3deg);
         }
+
+
+        .toolbar .paperMenu {
+            color: inherit;
+            position: relative;
+            font-family: inherit;
+            font-size: inherit;
+            border-width: 1px;
+            border-style: solid;
+            border-color: #B5914A;
+            border-radius: 255px 15px 225px 15px/15px 225px 15px 255px;
+            background-color: #E6CA8E;
+            padding: 2px 20px;
+            display: none;
+        }
+
+        .toolbar .paperMenu:before,
+        .toolbar .paperMenu:after {
+            content: "";
+            position: absolute;
+            z-index: -1;
+            bottom: 5px;
+            left: 0px;
+            width: 50%;
+            height: 10px;
+            box-shadow: 0 10px 5px 0px rgba(0, 0, 0, 0.7);
+            transform: rotate(-3deg);
+        }
+
+        .toolbar .paperMenu:after {
+            right: 0px;
+            left: auto;
+            transform: rotate(3deg);
+        }
+
+
 
         .toolbar .statusbar {
             display: flex;
@@ -349,10 +384,13 @@
         </div>
 
         <button class="paper">Select</button>
-        <button class="paper">Lumbermill</button>
-        <button class="paper">Stonemason</button>
-        <button class="paper">Bank</button>
-        <button class="paper">Barracks</button>
+        <button class="paper" onclick="buildingMenu()" id="menuBtn">Menu</button>
+        <div id="menuMembers">
+            <button class="paperMenu">Lumbermill</button>
+            <button class="paperMenu">Stonemason</button>
+            <button class="paperMenu">Bank</button>
+            <button class="paperMenu">Barracks</button>
+        </div>
 
     </div>
     <canvas id="ui_map" width="1000" height="1000"></canvas>

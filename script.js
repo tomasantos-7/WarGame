@@ -3,13 +3,18 @@ const MAP_HEIGHT = 100;
 const CELL_WIDTH = 32;
 const CELL_HEIGHT = 32;
 const buildings = [];
-const resources = [];
+const players = [];
 
 class Building {
     type = 'none';
     player = true;
+    castle = 0;
+    lumberCamp = 0;
+    quarry = 0;
+    bank = 0;
+    barracks = 0;
     generates = 'none';
-    resources_pre_second = 0
+    resources_pre_second = 0;
     x = 0;
     y = 0;
     width = 1;
@@ -17,8 +22,7 @@ class Building {
 
     placeOnMap() {
         for (let x = this.x; x < this.x + this.width; x++)
-            for (let y = this.y; y < this.y + this.height; y++) 
-            {
+            for (let y = this.y; y < this.y + this.height; y++) {
                 map[x][y].type = 'occupied';
                 map[x][y].sprite = null;
             }
@@ -27,14 +31,15 @@ class Building {
     }
 }
 
-class Resources {
-    type = 'none';
-    player = true;
-    amount = 0;
-    amount_per_second = 0;
+class Player {
+    amount_food = 0;
+    amount_wood = 0;
+    amount_stone = 0;
+    amount_gold = 0;
 }
 
-let resource = new Resources();
+let player = new Player();
+let ai = new Player();
 let building = new Building();
 
 
@@ -73,14 +78,14 @@ function drawFrame(timestamp) {
 
     drawTexture();
     drawScenery();
+
     //drawGrayscale();//para debug
     requestAnimationFrame(drawFrame);
 }
 //** terrain generation functions
 function initializeTerrain() {
-    let canvas = document.getElementById("ui_map");
     let type;
-    
+
     //imaginando que o terreno está tudo a nivel da agua, a cada iteração vamos elevar uma pequena ilha de forma redonda, num local aleatório 
     for (let i = 0; i < 100; i++) {
 
@@ -126,63 +131,76 @@ function initializeTerrain() {
             }
         }
 
+    getCaslte();
+    //função de intervalo a cada segundo gera 1 de resources
+
+    setInterval(() => {
+        GetResources();
+    }, 1000);
+}
+
+function getCaslte() {
     // Criação do castelo
 
     let x = Math.floor(Math.random() * (MAP_WIDTH / 10));
     let y = Math.floor(Math.random() * (MAP_HEIGHT / 10));
-    building.type = 'castle';
-    building.x = x;
-    building.y = y;
-    building.generates = 'food';
-    building.resources_pre_second = 1;
-    building.width = 4;
-    building.height = 4;
-    building.player = true;
-    building.placeOnMap();
-    map[x][y].sprite = document.getElementById('Castle1');
-    buildings.push(building);
 
-    //função de intervalo a cada segundo gera 1 de resources (food)
-
-    setInterval(() => {
-        GetResources(building.generates, building.resources_pre_second);
-    }, 1000);
-
-
-
-    
-                    
-    //console.log(map);
+    placeBuildings('castle', x, y, 1, 4, 4, true, 'Castle1');
 }
 
-
 //função para gerar resources ao longo do tempo
-function GetResources(resourcesType, amount_per_second, isPlayer){
-    
+function GetResources() {
 
-    resource.type = resourcesType;
-    resource.amount_per_second = amount_per_second;
-    resource.amount += resource.amount_per_second;
-    resource.player = isPlayer;
-    resources.push(resource);   
+    for (const array_building of buildings) {
+        console.log(array_building);
 
-    let lbl = document.getElementById(resourcesType);
-    if (resourcesType == 'food') 
-        lbl.textContent = "Comida = " + resource.amount;
-    if (resourcesType == 'wood')
-        lbl.textContent = "Madeira = " + resource.amount;
-    if (resourcesType == 'stone')
-        lbl.textContent = "Pedra = " + resource.amount;
-    if (resourcesType == 'gold')
-        lbl.textContent = "Ouro = " + resource.amount;
+        let property_name = "amount_" + array_building.generates;
+        player[property_name] += array_building.resources_pre_second
 
-}       
+        console.log(players);
+        console.log(buildings);
+    }
+    document.getElementById("food").textContent = "Comida = " + player.amount_food;
+    document.getElementById("wood").textContent = "Madeira = " + player.amount_wood;
+    document.getElementById("stone").textContent = "Pedra = " + player.amount_stone;
+    document.getElementById("gold").textContent = "Ouro = " + player.amount_gold;
+}
 
-function placeBuildings(type, x, y, generates, amount_per_second, width, height, isPlayer, sprite_id){
+function placeBuildings(type, x, y, amount_per_second, width, height, isPlayer, sprite_id) {
+
+
     building.type = type;
     building.x = x;
     building.y = y;
-    building.generates = generates;
+
+    switch (type) {
+        case 'castle':
+            building.castle++;
+            building.generates = 'food';
+            break;
+        case 'lumberCamp':
+            building = new Building();
+            building.lumberCamp++;
+            building.generates = 'wood';
+
+            break;
+        case 'quarry':
+            building = new Building();
+            building.quarry++;
+            building.generates = 'stone';
+            break;
+        case 'bank':
+            building = new Building();
+            building.bank++;
+            building.generates = 'gold';
+            break;
+        case 'barracks':
+            building = new Building();
+            building.barracks++;
+            building.generates = 'soldier';
+            break;
+    }
+
     building.resources_pre_second = amount_per_second;
     building.width = width;
     building.height = height;
@@ -190,37 +208,20 @@ function placeBuildings(type, x, y, generates, amount_per_second, width, height,
     building.placeOnMap();
     map[x][y].sprite = document.getElementById(sprite_id);
     buildings.push(building);
-
-    //função de intervalo a cada segundo gera 1 de resources (food)
-
-    setInterval(() => {
-        GetResources(building.generates, building.resources_pre_second, isPlayer);
-    }, 1000);
 }
 
 
-function userClicked(){
+function userClicked() {
     let canvas = document.getElementById("ui_map");
     canvas.addEventListener("mousedown", function (e) {
         let values = buildingsPlacement(canvas, e);
         let x = values[0];
         let y = values[1];
 
-        placeBuildings('lumberCamp', x, y, 'wood', 1, 2, 2, true, 'Lumber1');
+        placeBuildings('lumberCamp', x, y, 1, 2, 2, true, 'Lumber1');
 
-        requestAnimationFrame(drawFrame);
     });
 }
-
-
-
-
-
-
-
-
-
-
 
 
 function buildingsPlacement(canvas, event) {
@@ -228,7 +229,8 @@ function buildingsPlacement(canvas, event) {
     let rect = canvas.getBoundingClientRect();
     let x = event.clientX - rect.left;
     let y = event.clientY - rect.top;
-
+    x = Math.floor(x / CELL_WIDTH);
+    y = Math.floor(y / CELL_HEIGHT);
     return [x, y];
 }
 
@@ -254,13 +256,13 @@ function drawTexture() {
     const texture = document.getElementById("texture"); //get the texture image
     ctx.fillStyle = ctx.createPattern(texture, "repeat"); //set as fill
     ctx.fillRect(0, 0, MAP_WIDTH * CELL_WIDTH, MAP_HEIGHT * CELL_HEIGHT);
-/*
-    for (let x = 0; x < MAP_WIDTH * CELL_WIDTH; x += 32)
-        for (let y = 0; y < MAP_WIDTH * CELL_WIDTH; y += 32) {
-            ctx.strokeStyle = "rgb(0 0 0 / 20%)";
-            ctx.strokeRect(x, y, 32, 32);
-        }
-*/
+    /*
+        for (let x = 0; x < MAP_WIDTH * CELL_WIDTH; x += 32)
+            for (let y = 0; y < MAP_WIDTH * CELL_WIDTH; y += 32) {
+                ctx.strokeStyle = "rgb(0 0 0 / 20%)";
+                ctx.strokeRect(x, y, 32, 32);
+            }
+    */
 
 }
 
@@ -270,8 +272,8 @@ function drawScenery() {
     const ctx = canvas.getContext("2d");
     for (let x = 0; x < MAP_WIDTH; x++)
         for (let y = 0; y < MAP_WIDTH; y++) {
-    
-            let sprite = map[x][y]['sprite'];
+
+            let sprite = map[x][y].sprite;
             if (!sprite) {
                 continue;
             } else {
@@ -296,5 +298,3 @@ function drawGrayscale() {
             ctx.fillRect(x * CELL_WIDTH, y * CELL_HEIGHT, CELL_WIDTH, CELL_HEIGHT);
         }
 }
-
-
