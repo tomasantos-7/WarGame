@@ -5,6 +5,7 @@ const CELL_HEIGHT = 32;
 const buildings = [];
 const players = [];
 
+
 class Building {
     type = 'none';
     player = true;
@@ -19,15 +20,41 @@ class Building {
     y = 0;
     width = 1;
     height = 1;
+    hp = 0;
+    castle_x = 0;
+    castle_y = 0;
 
     placeOnMap() {
+
         for (let x = this.x; x < this.x + this.width; x++)
             for (let y = this.y; y < this.y + this.height; y++) {
                 map[x][y].type = 'occupied';
                 map[x][y].sprite = null;
-            }
 
+            }
+        this.castle_x = this.x;
+        this.castle_y = this.y;
         map[this.x][this.y].type = this.type;
+    }
+
+    isInsideBuildZone() {
+        for (let x = this.x; x < this.x + this.width; x++)
+            for (let y = this.y; y < this.y + this.height; y++) {
+                let center_x = Math.floor(Math.random() * CELL_WIDTH);
+                let center_y = Math.floor(Math.random() * CELL_HEIGHT);
+
+                for (this.castle_x = 0; this.castle_x < this.castle_x * CELL_WIDTH; this.castle_x++)
+                    for (this.castle_y = 0; this.castle_y < center_y * CELL_WIDTH; this.castle_y++) {
+                        let delta_x = this.castle_x - center_x;
+                        let delta_y = this.castle_y - center_y;
+                        let distance = Math.sqrt(Math.pow(delta_x, 2) + Math.pow(delta_y, 2));
+                        if (distance > 10) {
+                            return true;
+                        } else {
+                            return false;
+                        }
+                    }
+            }
     }
 }
 
@@ -36,6 +63,7 @@ class Player {
     amount_wood = 0;
     amount_stone = 0;
     amount_gold = 0;
+    amount_soldier = 0;
 }
 
 let player = new Player();
@@ -75,11 +103,9 @@ function drawFrame(timestamp) {
 
     }
     previous_ts = timestamp;
-
     drawTexture();
     drawScenery();
-
-    //drawGrayscale();//para debug
+    drawGrayscale();
     requestAnimationFrame(drawFrame);
 }
 //** terrain generation functions
@@ -131,7 +157,7 @@ function initializeTerrain() {
             }
         }
 
-    getCaslte();
+    getCastle();
     //função de intervalo a cada segundo gera 1 de resources
 
     setInterval(() => {
@@ -139,26 +165,23 @@ function initializeTerrain() {
     }, 1000);
 }
 
-function getCaslte() {
+function getCastle() {
     // Criação do castelo
 
     let x = Math.floor(Math.random() * (MAP_WIDTH / 10));
     let y = Math.floor(Math.random() * (MAP_HEIGHT / 10));
 
     placeBuildings('castle', x, y, 1, 4, 4, true, 'Castle1');
+    BZMAP_SIZE = 12;
 }
 
 //função para gerar resources ao longo do tempo
 function GetResources() {
 
     for (const array_building of buildings) {
-        console.log(array_building);
 
         let property_name = "amount_" + array_building.generates;
         player[property_name] += array_building.resources_pre_second
-
-        console.log(players);
-        console.log(buildings);
     }
     document.getElementById("food").textContent = "Comida = " + player.amount_food;
     document.getElementById("wood").textContent = "Madeira = " + player.amount_wood;
@@ -177,27 +200,31 @@ function placeBuildings(type, x, y, amount_per_second, width, height, isPlayer, 
         case 'castle':
             building.castle++;
             building.generates = 'food';
+            building.hp = 10000;
             break;
         case 'lumberCamp':
             building = new Building();
             building.lumberCamp++;
             building.generates = 'wood';
-
+            building.hp = 500;
             break;
         case 'quarry':
             building = new Building();
             building.quarry++;
             building.generates = 'stone';
+            building.hp = 500;
             break;
         case 'bank':
             building = new Building();
             building.bank++;
             building.generates = 'gold';
+            building.hp = 500;
             break;
         case 'barracks':
             building = new Building();
             building.barracks++;
             building.generates = 'soldier';
+            building.hp = 500;
             break;
     }
 
@@ -205,9 +232,29 @@ function placeBuildings(type, x, y, amount_per_second, width, height, isPlayer, 
     building.width = width;
     building.height = height;
     building.player = isPlayer;
-    building.placeOnMap();
-    map[x][y].sprite = document.getElementById(sprite_id);
-    buildings.push(building);
+
+    if (map[x][y].type != 'occupied' && map[x][y].type != 'hill') {
+        if (type == 'castle') {
+            building.placeOnMap();
+            map[x][y].sprite = document.getElementById(sprite_id);
+            buildings.push(building);
+        } else {
+            let bool = building.isInsideBuildZone()
+            if (bool) {
+                building.placeOnMap();
+                map[x][y].sprite = document.getElementById(sprite_id);
+                buildings.push(building);
+            } else {
+                alert("Out of Building Zone")
+            }
+        }
+
+
+    } else {
+        alert("Coloca num espaço disponivel");
+    }
+
+
 }
 
 
@@ -219,7 +266,6 @@ function userClicked() {
         let y = values[1];
 
         placeBuildings('lumberCamp', x, y, 1, 2, 2, true, 'Lumber1');
-
     });
 }
 
@@ -232,6 +278,10 @@ function buildingsPlacement(canvas, event) {
     x = Math.floor(x / CELL_WIDTH);
     y = Math.floor(y / CELL_HEIGHT);
     return [x, y];
+}
+
+function buildingZone(castle_x, castle_y, center_x, center_y, radius) {
+
 }
 
 function elevateTerrain(amount, center_x, center_y, radius) {
@@ -256,13 +306,13 @@ function drawTexture() {
     const texture = document.getElementById("texture"); //get the texture image
     ctx.fillStyle = ctx.createPattern(texture, "repeat"); //set as fill
     ctx.fillRect(0, 0, MAP_WIDTH * CELL_WIDTH, MAP_HEIGHT * CELL_HEIGHT);
-    /*
-        for (let x = 0; x < MAP_WIDTH * CELL_WIDTH; x += 32)
-            for (let y = 0; y < MAP_WIDTH * CELL_WIDTH; y += 32) {
-                ctx.strokeStyle = "rgb(0 0 0 / 20%)";
-                ctx.strokeRect(x, y, 32, 32);
-            }
-    */
+
+    for (let x = 0; x < MAP_WIDTH * CELL_WIDTH; x += 32)
+        for (let y = 0; y < MAP_WIDTH * CELL_WIDTH; y += 32) {
+            ctx.strokeStyle = "rgb(0 0 0 / 20%)";
+            ctx.strokeRect(x, y, 32, 32);
+        }
+
 
 }
 
@@ -295,6 +345,13 @@ function drawGrayscale() {
                 ctx.fillStyle = `rgb(0 0 0 / ${map[x][y].elevation * 100}%)`;
             else
                 ctx.fillStyle = `rgb(255 0 0 / ${map[x][y].elevation * 100}%)`;
+
+            if (map[x][y].type == 'occupied')
+                ctx.fillStyle = `rgb(255 100 0 / ${map[x][y].elevation * 100}%)`;
+
             ctx.fillRect(x * CELL_WIDTH, y * CELL_HEIGHT, CELL_WIDTH, CELL_HEIGHT);
         }
+    /*
+            if(map[x+building.castle_x][y+building.castle_y].type != 'occupied')
+                ctx.fillStyle = `rgb(0 255 0 / ${map[x][y].elevation * 100}%)`;*/
 }
