@@ -5,10 +5,65 @@ const CELL_HEIGHT = 32;
 const buildings = [];
 const players = [];
 
+class Engine {
+
+
+
+    build() {
+
+        //CASTLE
+
+        if (ai_building.castle == 0) {
+            let x = Math.floor(Math.random() * (MAP_WIDTH) + 1);
+            let y = Math.floor(Math.random() * (MAP_HEIGHT) + 1);
+
+            if (x > building.castle_x + 1 && y > building.castle_y + 1 && map[x][y].type != 'hill') {
+                placeBuildings('castleAI', x, y, 1, 4, 4, 'Castle1', false);
+
+            } else {
+                x = Math.floor(Math.random() * (MAP_WIDTH) + 1);
+                y = Math.floor(Math.random() * (MAP_HEIGHT) + 1);
+            }
+        } else {
+            //Buildings
+
+            if (ai_building.lumberCamp == 0) {
+                if (ai.amount_food > 10) {
+                    placeBuildings('lumberCamp', ai_building.castle_x + 5, ai_building.castle_y + 5, 1, 2, 2, 'Lumber1', false);
+                }
+            }
+            if (ai_building.quarry == 0) {
+                if (ai.amount_food > 10 && ai.amount_wood > 10) {
+                    placeBuildings('quarry', ai_building.castle_x + 7, ai_building.castle_y + 3, 1, 2, 2, 'Quarry1', false);
+                }
+            }
+            if (ai_building.bank == 0) {
+                if (ai.amount_wood > 20 && ai.amount_stone > 20) {
+                    placeBuildings('bank', ai_building.castle_x + Math.floor(Math.random() * 10), ai_building.castle_y + Math.floor(Math.random() * 10), 2, 2, 2, 'Bank1', false);
+                }
+            }
+            if (ai_building.barracks == 0) {
+                if (ai.amount_food > 10 && ai.amount_stone > 15) {
+                    placeBuildings('barracks', ai_building.castle_x + Math.floor(Math.random() * 10), ai_building.castle_y + Math.floor(Math.random() * 10), 1, 2, 2, 'Barracks1', false);
+                }
+            }
+        }
+
+
+    }
+
+    move() {
+
+    }
+
+    attack() {
+
+    }
+
+}
 
 class Building {
     type = 'none';
-    player = true;
     castle = 0;
     lumberCamp = 0;
     quarry = 0;
@@ -23,8 +78,10 @@ class Building {
     hp = 0;
     castle_x = 0;
     castle_y = 0;
+    isPlayer = true;
 
     placeOnMap() {
+
 
         for (let x = this.x; x < this.x + this.width; x++)
             for (let y = this.y; y < this.y + this.height; y++) {
@@ -32,31 +89,29 @@ class Building {
                 map[x][y].sprite = null;
 
             }
-        this.castle_x = this.x;
-        this.castle_y = this.y;
+        if (this.type == 'castle') {
+            this.castle_x = this.x;
+            this.castle_y = this.y;
+        }
+
         map[this.x][this.y].type = this.type;
     }
 
     isInsideBuildZone() {
-        for (let x = this.x; x < this.x + this.width; x++)
-            for (let y = this.y; y < this.y + this.height; y++) {
-                let center_x = Math.floor(Math.random() * CELL_WIDTH);
-                let center_y = Math.floor(Math.random() * CELL_HEIGHT);
-
-                for (this.castle_x = 0; this.castle_x < this.castle_x * CELL_WIDTH; this.castle_x++)
-                    for (this.castle_y = 0; this.castle_y < center_y * CELL_WIDTH; this.castle_y++) {
-                        let delta_x = this.castle_x - center_x;
-                        let delta_y = this.castle_y - center_y;
-                        let distance = Math.sqrt(Math.pow(delta_x, 2) + Math.pow(delta_y, 2));
-                        if (distance > 10) {
-                            return true;
-                        } else {
-                            return false;
-                        }
-                    }
+        for (let x = 0; x < this.castle_x * CELL_WIDTH; x++)
+            for (let y = 0; y < this.castle_y * CELL_WIDTH; y++) {
+                let delta_x = x - this.castle_x;
+                let delta_y = y - this.castle_y;
+                let distance = Math.sqrt(Math.pow(delta_x, 2) + Math.pow(delta_y, 2));
+                if (distance > 10) {
+                    return true;
+                } else {
+                    return false;
+                }
             }
     }
 }
+
 
 class Player {
     amount_food = 0;
@@ -69,7 +124,8 @@ class Player {
 let player = new Player();
 let ai = new Player();
 let building = new Building();
-
+let ai_building = new Building();
+let engine = new Engine();
 
 
 
@@ -117,7 +173,7 @@ function initializeTerrain() {
 
         let center_x = Math.floor(Math.random() * MAP_WIDTH);
         let center_y = Math.floor(Math.random() * MAP_HEIGHT);
-        elevateTerrain(0.1, center_x, center_y, 10)
+        elevateTerrain(0.1, center_x, center_y, 10);
     }
     /* texture map
             0.0 < plains < 0.3
@@ -162,6 +218,7 @@ function initializeTerrain() {
 
     setInterval(() => {
         GetResources();
+        engine.build();
     }, 1000);
 }
 
@@ -171,8 +228,8 @@ function getCastle() {
     let x = Math.floor(Math.random() * (MAP_WIDTH / 10));
     let y = Math.floor(Math.random() * (MAP_HEIGHT / 10));
 
-    placeBuildings('castle', x, y, 1, 4, 4, true, 'Castle1');
-    BZMAP_SIZE = 12;
+    placeBuildings('castle', x, y, 1, 4, 4, 'Castle1', true);
+
 }
 
 //função para gerar resources ao longo do tempo
@@ -180,81 +237,155 @@ function GetResources() {
 
     for (const array_building of buildings) {
 
-        let property_name = "amount_" + array_building.generates;
-        player[property_name] += array_building.resources_pre_second
+        if (array_building.isPlayer == true) {
+            let property_name = "amount_" + array_building.generates;
+            player[property_name] += array_building.resources_pre_second;
+        }
+        if (array_building.isPlayer == false) {
+            let property_name = "amount_" + array_building.generates;
+            ai[property_name] += array_building.resources_pre_second;
+        }
     }
+
     document.getElementById("food").textContent = "Comida = " + player.amount_food;
     document.getElementById("wood").textContent = "Madeira = " + player.amount_wood;
     document.getElementById("stone").textContent = "Pedra = " + player.amount_stone;
     document.getElementById("gold").textContent = "Ouro = " + player.amount_gold;
+    document.getElementById("foodAI").textContent = "Comida AI = " + ai.amount_food;
+    document.getElementById("woodAI").textContent = "Madeira AI = " + ai.amount_wood;
+    document.getElementById("stoneAI").textContent = "Pedra AI = " + ai.amount_stone;
+    document.getElementById("goldAI").textContent = "Ouro AI = " + ai.amount_gold;
 }
 
-function placeBuildings(type, x, y, amount_per_second, width, height, isPlayer, sprite_id) {
+function placeBuildings(type, x, y, amount_per_second, width, height, sprite_id, isPlayer) {
 
 
-    building.type = type;
-    building.x = x;
-    building.y = y;
+    if (isPlayer) {
+        building.type = type;
+        building.x = x;
+        building.y = y;
 
-    switch (type) {
-        case 'castle':
-            building.castle++;
-            building.generates = 'food';
-            building.hp = 10000;
-            break;
-        case 'lumberCamp':
-            building = new Building();
-            building.lumberCamp++;
-            building.generates = 'wood';
-            building.hp = 500;
-            break;
-        case 'quarry':
-            building = new Building();
-            building.quarry++;
-            building.generates = 'stone';
-            building.hp = 500;
-            break;
-        case 'bank':
-            building = new Building();
-            building.bank++;
-            building.generates = 'gold';
-            building.hp = 500;
-            break;
-        case 'barracks':
-            building = new Building();
-            building.barracks++;
-            building.generates = 'soldier';
-            building.hp = 500;
-            break;
-    }
+        switch (type) {
+            case 'castle':
+                building.castle++;
+                building.generates = 'food';
+                building.hp = 10000;
+                break;
+            case 'lumberCamp':
+                building = new Building();
+                building.lumberCamp++;
+                building.generates = 'wood';
+                building.hp = 500;
+                break;
+            case 'quarry':
+                building = new Building();
+                building.quarry++;
+                building.generates = 'stone';
+                building.hp = 500;
+                break;
+            case 'bank':
+                building = new Building();
+                building.bank++;
+                building.generates = 'gold';
+                building.hp = 500;
+                break;
+            case 'barracks':
+                building = new Building();
+                building.barracks++;
+                building.generates = 'soldier';
+                building.hp = 500;
+                break;
+        }
+        building.isPlayer = isPlayer;
+        building.resources_pre_second = amount_per_second;
+        building.width = width;
+        building.height = height;
 
-    building.resources_pre_second = amount_per_second;
-    building.width = width;
-    building.height = height;
-    building.player = isPlayer;
-
-    if (map[x][y].type != 'occupied' && map[x][y].type != 'hill') {
-        if (type == 'castle') {
-            building.placeOnMap();
-            map[x][y].sprite = document.getElementById(sprite_id);
-            buildings.push(building);
-        } else {
-            let bool = building.isInsideBuildZone()
-            if (bool) {
+        if (map[x][y].type != 'occupied' && map[x][y].type != 'hill') {
+            if (type == 'castle') {
                 building.placeOnMap();
                 map[x][y].sprite = document.getElementById(sprite_id);
                 buildings.push(building);
             } else {
-                alert("Out of Building Zone")
+                let bool = building.isInsideBuildZone()
+                if (bool) {
+                    building.placeOnMap();
+                    map[x][y].sprite = document.getElementById(sprite_id);
+                    buildings.push(building);
+                } else {
+                    alert("Out of Building Zone")
+                }
             }
+
+        } else {
+            alert("Coloca num espaço disponivel");
+        }
+
+    } else {
+
+        ai_building.type = type;
+        ai_building.x = x;
+        ai_building.y = y;
+
+        switch (type) {
+            case 'castleAI':
+                ai_building.castle++;
+                ai_building.generates = 'food';
+                ai_building.hp = 10000;
+                break;
+            case 'lumberCamp':
+                ai_building = new Building();
+                ai_building.lumberCamp++;
+                ai_building.generates = 'wood';
+                ai_building.hp = 500;
+                break;
+            case 'quarry':
+                ai_building = new Building();
+                ai_building.quarry++;
+                ai_building.generates = 'stone';
+                ai_building.hp = 500;
+                break;
+            case 'bank':
+                ai_building = new Building();
+                ai_building.bank++;
+                ai_building.generates = 'gold';
+                ai_building.hp = 500;
+                break;
+            case 'barracks':
+                ai_building = new Building();
+                ai_building.barracks++;
+                ai_building.generates = 'soldier';
+                ai_building.hp = 500;
+                break;
+        }
+
+        ai_building.isPlayer = isPlayer;
+        ai_building.resources_pre_second = amount_per_second;
+        ai_building.width = width;
+        ai_building.height = height;
+
+        if (map[x][y].type != 'occupied' && map[x][y].type != 'hill') {
+            if (type == 'castleAI') {
+                ai_building.placeOnMap();
+                map[x][y].sprite = document.getElementById(sprite_id);
+                buildings.push(ai_building);
+            } else {
+                let bool = ai_building.isInsideBuildZone();
+
+                if (bool) {
+                    ai_building.placeOnMap();
+                    map[x][y].sprite = document.getElementById(sprite_id);
+                    buildings.push(ai_building);
+                } else {
+                    alert("Out of Building Zone")
+                }
+            }
+        } else {
+            alert("Coloca num espaço disponivel");
         }
 
 
-    } else {
-        alert("Coloca num espaço disponivel");
     }
-
-
 }
 
 
@@ -265,7 +396,7 @@ function userClicked() {
         let x = values[0];
         let y = values[1];
 
-        placeBuildings('lumberCamp', x, y, 1, 2, 2, true, 'Lumber1');
+        placeBuildings('lumberCamp', x, y, 1, 2, 2, 'Lumber1', true);
     });
 }
 
@@ -278,10 +409,6 @@ function buildingsPlacement(canvas, event) {
     x = Math.floor(x / CELL_WIDTH);
     y = Math.floor(y / CELL_HEIGHT);
     return [x, y];
-}
-
-function buildingZone(castle_x, castle_y, center_x, center_y, radius) {
-
 }
 
 function elevateTerrain(amount, center_x, center_y, radius) {
