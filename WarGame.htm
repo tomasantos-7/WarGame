@@ -11,16 +11,24 @@
 
 <body id="dump" onload="setup()">
 
-    <div class="tabResources">
-        <a id="food">Comida: </a>
-        <a id="wood">Madeira: </a>
-        <a id="stone">Pedra: </a>
-        <a id="gold">Ouro: </a>
-        <a id="foodAI">Comida AI: </a>
-        <a id="woodAI">Madeira AI: </a>
-        <a id="stoneAI">Pedra AI: </a>
-        <a id="goldAI">Ouro AI: </a>
-        <button onclick="userClicked()">Lumber Camp</button>
+    <div class="toolbar">
+
+        <div class="paper statusbar">
+            <div id="foodstatus" class="status" title="Food : " style="--icon:url('assets/food.png');"> </div>
+            <div id="woodstatus" class="status" title="Wood : " style="--icon:url('assets/wood.png');"> </div>
+            <div id="stonestatus" class="status" title="Stone : " style="--icon:url('assets/stone.png');"> </div>
+            <div id="goldstatus" class="status" title="Gold : " style="--icon:url('assets/money.png');"> </div>
+        </div>
+
+        <button class="paper">Select</button>
+        <button class="paper" onclick="showButtons()">Menu</button>
+        <div>
+            <button id="menuMembers1" class="paperMenu">Lumbermill</button>
+            <button id="menuMembers2" class="paperMenu">Stonemason</button>
+            <button id="menuMembers3" class="paperMenu">Bank</button>
+            <button id="menuMembers4" class="paperMenu">Barracks</button>
+        </div>
+
     </div>
 
     <canvas id="ui_map" width="1000" height="1000"></canvas>
@@ -61,6 +69,9 @@
         </div>
         <div id="barracks">
             <img id="Barracks1" src="assets/Barracks.png">
+        </div>
+        <div id="Units">
+            <img id="Infantry2" src="assets/Infantry2.png">
         </div>
     </div>
 
