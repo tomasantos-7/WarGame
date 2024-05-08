@@ -1,0 +1,485 @@
+<html>
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>terrain generation</title>
+    <style>
+        @font-face {
+            font-family: ui-font;
+            src: url(../assets/Birthstone-Regular.ttf);
+        }
+
+        html,
+        body {
+            user-select: none;
+            font-family: ui-font, "Comic Sans MS", "Comic Sans", cursive;
+            font-size: 20pt;
+            color: #634f29;
+            padding: 0px;
+            margin: 0px;
+        }
+
+        canvas {
+            position: fixed;
+            top: 0px;
+            left: 0px;
+        }
+
+        .toolbar {
+            position: fixed;
+            top: 0px;
+            left: 0px;
+            right: 0px;
+            padding: 20px;
+            display: flex;
+            justify-content: start;
+            gap: 20px;
+            z-index: 1;
+        }
+
+        .toolbar button {
+            cursor: pointer;
+        }
+
+        .toolbar .paper {
+            color: inherit;
+            position: relative;
+            font-family: inherit;
+            font-size: inherit;
+            border-width: 1px;
+            border-style: solid;
+            border-color: #B5914A;
+            border-radius: 255px 15px 225px 15px/15px 225px 15px 255px;
+            background-color: #E6CA8E;
+            padding: 2px 20px;
+
+        }
+
+        .toolbar .paper:before,
+        .toolbar .paper:after {
+            content: "";
+            position: absolute;
+            z-index: -1;
+            bottom: 5px;
+            left: 0px;
+            width: 50%;
+            height: 10px;
+            box-shadow: 0 10px 5px 0px rgba(0, 0, 0, 0.7);
+            transform: rotate(-3deg);
+        }
+
+        .toolbar .paper:after {
+            right: 0px;
+            left: auto;
+            transform: rotate(3deg);
+        }
+
+
+        .toolbar .paperMenu {
+            color: inherit;
+            position: relative;
+            font-family: inherit;
+            font-size: inherit;
+            border-width: 1px;
+            border-style: solid;
+            border-color: #B5914A;
+            border-radius: 255px 15px 225px 15px/15px 225px 15px 255px;
+            background-color: #E6CA8E;
+            padding: 2px 20px;
+            display: none;
+        }
+
+        .toolbar .paperMenu:before,
+        .toolbar .paperMenu:after {
+            content: "";
+            position: absolute;
+            z-index: -1;
+            bottom: 5px;
+            left: 0px;
+            width: 50%;
+            height: 10px;
+            box-shadow: 0 10px 5px 0px rgba(0, 0, 0, 0.7);
+            transform: rotate(-3deg);
+        }
+
+        .toolbar .paperMenu:after {
+            right: 0px;
+            left: auto;
+            transform: rotate(3deg);
+        }
+
+
+
+        .toolbar .statusbar {
+            display: flex;
+            gap: 20px;
+        }
+
+        .toolbar .status {
+            display: inline-grid;
+            grid-template-columns: auto auto 24px;
+            grid-auto-columns: auto;
+            grid-template-rows: 1fr;
+            grid-auto-flow: column;
+            align-content: center;
+            justify-content: space-evenly;
+            align-items: center;
+            justify-items: start;
+            gap: 4px
+        }
+
+        .toolbar .status::before {
+            content: attr(title);
+            display: inline-block;
+            grid-column-start: 1;
+        }
+
+        .toolbar .status::after {
+            content: '';
+            display: inline-block;
+            background-image: var(--icon);
+            width: 24px;
+            height: 24px;
+            grid-column-start: 3;
+        }
+    </style>
+
+    <script>
+        const MAP_WIDTH = 100;
+        const MAP_HEIGHT = 100;
+        const CELL_WIDTH = 32;
+        const CELL_HEIGHT = 32;
+        const buildings = [];
+        const units = [];
+
+        class Building
+        {
+            type = 'none';
+            player = true;
+            generates = 'food';
+            resources_pre_second = 1
+            x = 0;
+            y = 0;
+            width = 1;
+            height = 1;
+
+            placeOnMap()
+            {
+                for (let x = this.x; x < this.x + this.width; x++)
+                    for (let y = this.y; y < this.y + this.height; y++)
+                    {
+                        map[x][y].type = 'occupied';
+                        map[x][y].sprite = null;
+                    }
+                map[this.x][this.y].type = this.type;
+            }
+        }
+
+        class Unit
+        {
+            type = 'infantry';
+            sprite = null;
+            speed = 100;//32px per second
+            selected = true;
+            //the current position in pixels
+            x = 0;
+            y = 0;
+            //the target position in pixels
+            target_x = 0;
+            target_y = 100;
+            //the target cell
+            cell_x = 0;
+            cell_y = 0;
+            move(elapsed) 
+            {
+                //calculate the amount o pixels to travel
+                let delta_x = this.target_x - this.x;
+                let delta_y = this.target_y - this.y;
+                let distance = Math.sqrt(Math.pow(delta_x, 2) + Math.pow(delta_y, 2));
+                if (distance < 1)//close enough
+                    return
+                //turn this into a vector between 0 and 1 pointing in the right direction
+                let normalized_x = delta_x / distance;
+                let normalized_y = delta_y / distance;
+
+                //calculate the amount of PX we will travel in X milliseconds if we are traveling at 32PX per SECOND
+                let amount_traveled = (elapsed * this.speed) / 1000;
+                //get the cost for the current type of terrain
+                let cost = map[Math.floor(this.x / CELL_WIDTH)][Math.floor(this.y / CELL_HEIGHT)].cost;
+
+                this.x += (amount_traveled * normalized_x) / cost;
+                this.y += (amount_traveled * normalized_y) / cost;
+            }
+        }
+
+
+
+        //cria um array de arrays, com o tamanho (MAP_WIDTH x MAP_HEIGHT) tudo inicializado a 0;
+        const map = new Array(MAP_WIDTH).fill(0).map(() => new Array(MAP_HEIGHT).fill(0));
+        const textureMap = new Map();
+        function setup()
+        {
+            //make html reflect hour variables co we have only 1 place to alter
+            const ui_map = document.getElementById("ui_map");
+            ui_map.setAttribute("width", MAP_WIDTH * CELL_WIDTH);
+            ui_map.setAttribute("height", MAP_HEIGHT * CELL_HEIGHT);
+            const ui_units = document.getElementById("ui_units");
+            ui_units.setAttribute("width", MAP_WIDTH * CELL_WIDTH);
+            ui_units.setAttribute("height", MAP_HEIGHT * CELL_HEIGHT);
+
+            ui_units.addEventListener('click', function (event)
+            {
+                let mouse_x = event.offsetX;
+                let mouse_y = event.offsetY;
+                let cell_x = Math.floor(mouse_x / CELL_WIDTH);
+                let cell_y = Math.floor(mouse_y / CELL_HEIGHT);
+                for (let i = 0; i < units.length; i++)
+                {
+                    let unit = units[i];
+                    if (!unit.selected)
+                        continue;
+                    //in grid
+                    unit.cell_x = cell_x;
+                    unit.cell_y = cell_y;
+                    //in PX
+                    unit.target_x = cell_x * CELL_WIDTH;
+                    unit.target_y = cell_y * CELL_HEIGHT;
+                }
+            })
+
+            //load into variables
+            textureMap.set('tree', document.getElementById('trees').children);
+            textureMap.set('hill', document.getElementById('hills').children);
+            textureMap.set('pine', document.getElementById('pines').children);
+            textureMap.set('rock', document.getElementById('rocks').children);
+            textureMap.set('castle', document.getElementById('castles').children);
+            textureMap.set('infantries', document.getElementById('infantries').children);
+
+            initializeTerrain();
+            requestAnimationFrame(drawFrame);
+        }
+        let previous_ts = null;
+        function drawFrame(timestamp)
+        {
+            let delta = 0;
+            if (previous_ts)
+            {
+                delta = timestamp - previous_ts;
+                let fps = 1000 / delta;
+                document.title = `${Math.floor(fps)} fps`;
+
+            }
+
+            for (let i = 0; i < units.length; i++)
+            {
+                let unit = units[i];
+                unit.move(delta);
+            }
+            if (!previous_ts)//first frame
+            {
+                drawTexture();
+                drawScenery();
+            }
+            drawUnits();
+            requestAnimationFrame(drawFrame);
+
+            previous_ts = timestamp;
+        }
+        //** terrain generation functions
+        function initializeTerrain()
+        {
+            let canvas = document.getElementById("ui_map");
+
+            //imaginando que o terreno está tudo a nivel da agua, a cada iteração vamos elevar uma pequena ilha de forma redonda, num local aleatório 
+            for (let i = 0; i < 100; i++)
+            {
+                let center_x = Math.floor(Math.random() * MAP_WIDTH);
+                let center_y = Math.floor(Math.random() * MAP_HEIGHT);
+                elevateTerrain(0.1, center_x, center_y, 10)
+            }
+            for (let x = 0; x < MAP_WIDTH; x++)
+                for (let y = 0; y < MAP_WIDTH; y++)
+                {
+                    let height = map[x][y];
+                    let type = 'plain';
+                    let cost = 1;
+                    if (0.3 <= height && height < 0.4)
+                    {
+                        type = 'tree';
+                        cost = 1.5;
+                    }
+                    else if (0.5 <= height && height < 0.6)
+                    {
+                        type = 'pine';
+                        cost = 1.5;
+                    }
+                    else if (0.6 <= height && height < 0.7)
+                    {
+                        type = 'rock';
+                        cost = 2;
+                    }
+                    else if (0.7 <= height)
+                    {
+                        type = 'hill';
+                        cost = 2;
+                    }
+
+
+                    let list_of_images = textureMap.get(type);
+                    let chosen_sprite = null;
+                    if (list_of_images)
+                    {
+                        let chosen_index = Math.floor(Math.random() * list_of_images.length);
+                        chosen_sprite = list_of_images[chosen_index];
+                    }
+
+                    map[x][y] = {
+                        'elevation': height,
+                        'type': type,
+                        'transversable': type != 'hill', // adicionar buildings para fazer com que não seja possivel passar por dentro deless
+                        'cost': cost,
+                        'sprite': chosen_sprite,
+                    }
+                }
+
+            // Criação do castelo
+
+            let x = Math.floor(Math.random() * (MAP_WIDTH / 10));
+            let y = Math.floor(Math.random() * (MAP_HEIGHT / 10));
+            let building = new Building();
+            building.type = 'castle';
+            building.x = x;
+            building.y = y;
+            building.width = 4;
+            building.height = 4;
+            building.player = true;
+            building.placeOnMap();
+            map[x][y].sprite = document.getElementById('Castle1');
+            buildings.push(building);
+
+
+            let oUnit = new Unit();
+            let list_of_images = textureMap.get("infantries");
+            let chosen_sprite = null;
+            if (list_of_images)
+            {
+                let chosen_index = Math.floor(Math.random() * list_of_images.length);
+                oUnit.sprite = list_of_images[chosen_index];
+            }
+            units.push(oUnit);
+
+        }
+
+        function elevateTerrain(amount, center_x, center_y, radius)
+        {
+            for (let x = 0; x < MAP_WIDTH; x++)
+                for (let y = 0; y < MAP_WIDTH; y++)
+                {
+                    //distancia ao centro do circulo com o teorema de pitágoras
+                    let delta_x = x - center_x;
+                    let delta_y = y - center_y;
+                    let distance = Math.sqrt(Math.pow(delta_x, 2) + Math.pow(delta_y, 2));
+                    if (distance > radius)//esta celula está fora do circulo
+                        continue;
+                    map[x][y] += amount;
+                }
+        }
+        function drawTexture()
+        {
+            const canvas = document.getElementById("ui_map");
+            const ctx = canvas.getContext("2d");
+
+            const texture = document.getElementById("texture");//get the texture image
+            ctx.fillStyle = ctx.createPattern(texture, "repeat");//set as fill
+            ctx.fillRect(0, 0, MAP_WIDTH * CELL_WIDTH, MAP_HEIGHT * CELL_HEIGHT);
+
+            for (let x = 0; x < MAP_WIDTH * CELL_WIDTH; x += 32)
+                for (let y = 0; y < MAP_WIDTH * CELL_WIDTH; y += 32)
+                {
+                    ctx.strokeStyle = "rgb(0 0 0 / 20%)";
+                    ctx.strokeRect(x, y, 32, 32);
+                }
+
+
+        }
+        function drawScenery()
+        {
+            const canvas = document.getElementById("ui_map");
+            const ctx = canvas.getContext("2d");
+            for (let x = 0; x < MAP_WIDTH; x++)
+                for (let y = 0; y < MAP_WIDTH; y++)
+                {
+                    let sprite = map[x][y]['sprite'];
+                    let type = map[x][y]['type'];
+
+                    if (!sprite)
+                    {
+                        continue;
+                    } else
+                    {
+
+                        ctx.drawImage(sprite, x * (CELL_WIDTH), y * (CELL_HEIGHT), sprite.naturalWidth, sprite.naturalHeight);
+                    }
+
+
+                }
+        }
+        function drawUnits()
+        {
+            const canvas = document.getElementById("ui_units");
+            const ctx = canvas.getContext("2d");
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            for (let i = 0; i < units.length; i++)
+            {
+                let unit = units[i];
+                //unit gets drawn centered in cell
+                let draw_x = unit.x - unit.sprite.naturalWidth / 2 + CELL_WIDTH / 2;
+                let draw_y = unit.y - unit.sprite.naturalHeight / 2 + CELL_HEIGHT / 2;
+                ctx.drawImage(unit.sprite, draw_x, draw_y, unit.sprite.naturalWidth, unit.sprite.naturalHeight);
+            }
+        }
+
+    </script>
+</head>
+
+<body id="dump" onload="setup()">
+    <canvas id="ui_map" width="1000" height="1000"></canvas>
+    <canvas id="ui_units" width="1000" height="1000"></canvas>
+    <div style="display: none;">
+        <img id="texture" src="../assets/scroll.png">
+        <!--this element contains <img> childs that are a collection of alternate textures-->
+        <div id="trees">
+            <img id="Tree1" src="../assets/Tree1.png">
+            <img id="Tree2" src="../assets/Tree2.png">
+            <img id="Tree3" src="../assets/Tree3.png">
+            <img id="Tree4" src="../assets/Tree4.png">
+        </div>
+        <div id="pines">
+            <img id="Pine1" src="../assets/Pine1.png">
+            <img id="Pine2" src="../assets/Pine2.png">
+            <img id="Pine3" src="../assets/Pine3.png">
+        </div>
+        <div id="hills">
+            <img id="Hill1" src="../assets/Hill1.png">
+            <img id="Hill2" src="../assets/Hill2.png">
+            <img id="Hill3" src="../assets/Hill3.png">
+        </div>
+        <div id="rocks">
+            <img id="Rock1" src="../assets/Rock1.png">
+            <img id="Rock2" src="../assets/Rock2.png">
+        </div>
+        <div id="castles">
+            <img id="Castle1" src="../assets/Citadel.png">
+        </div>
+        <div id="infantries">
+            <img id="Infantry1" src="../assets/Infantry1.png">
+        </div>
+    </div>
+
+    <div id="button">
+        <button onload="buildingsPlacement()"></button>
+    </div>
+</body>
+
+</html>
