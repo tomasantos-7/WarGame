@@ -1,0 +1,313 @@
+<html>
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>terrain generation</title>
+    <script>
+        const MAP_WIDTH = 100;
+        const MAP_HEIGHT = 100;
+        const CELL_WIDTH = 32;
+        const CELL_HEIGHT = 32;
+        const buildings = [];
+
+        class Building
+        {
+            type = 'none';
+            player = true;
+            generates = 'food';
+            resources_pre_second = 1
+            x = 0;
+            y = 0;
+            width = 1;
+            height = 1;
+
+            placeOnMap()
+            {
+                for (let x = this.x; x < this.x + this.width; x++)
+                    for (let y = this.y; y < this.y + this.height; y++)
+                    {
+                        map[x][y].type = 'occupied';
+                        map[x][y].sprite = null;
+                    }
+                map[this.x][this.y].type = this.type;
+            }
+        }
+
+
+
+        //cria um array de arrays, com o tamanho (MAP_WIDTH x MAP_HEIGHT) tudo inicializado a 0;
+        const map = new Array(MAP_WIDTH).fill(0).map(() => new Array(MAP_HEIGHT).fill(0));
+        const textureMap = new Map();
+        function setup()
+        {
+            //make html reflect hour variables co we have only 1 place to alter
+            const canvas = document.getElementById("ui_map");
+            canvas.setAttribute("width", MAP_WIDTH * CELL_WIDTH);
+            canvas.setAttribute("height", MAP_HEIGHT * CELL_HEIGHT);
+            //load into variables
+            textureMap.set('tree', document.getElementById('trees').children);
+            textureMap.set('hill', document.getElementById('hills').children);
+            textureMap.set('pine', document.getElementById('pines').children);
+            textureMap.set('rock', document.getElementById('rocks').children);
+            textureMap.set('mountain', document.getElementById('mountains').children);
+            textureMap.set('castle', document.getElementById('castles').children);
+
+            initializeTerrain();
+            requestAnimationFrame(drawFrame);
+        }
+        let previous_ts = null;
+        function drawFrame(timestamp)
+        {
+            if (previous_ts)
+            {
+                let delta = timestamp - previous_ts;
+                let fps = 1000 / delta;
+                document.title = fps;
+
+            }
+            previous_ts = timestamp;
+
+            drawTexture();
+            drawScenery();
+            //drawGrayscale();//para debug
+            requestAnimationFrame(drawFrame);
+        }
+        //** terrain generation functions
+        function initializeTerrain()
+        {
+            let canvas = document.getElementById("ui_map");
+            let type;
+            //imaginando que o terreno está tudo a nivel da agua, a cada iteração vamos elevar uma pequena ilha de forma redonda, num local aleatório 
+            for (let i = 0; i < 100; i++)
+            {
+                let center_x = Math.floor(Math.random() * MAP_WIDTH);
+                let center_y = Math.floor(Math.random() * MAP_HEIGHT);
+                elevateTerrain(0.1, center_x, center_y, 10)
+            }
+            /* texture map
+           0.0 < plains < 0.3
+           0.3 < trees < 0.4
+           0.4 < plains < 0.5
+           0.5 < pines < 0.6
+           0.6 < plains < 0.7
+           0.7 < hills < 1.0
+           */
+            for (let x = 0; x < MAP_WIDTH; x++)
+                for (let y = 0; y < MAP_HEIGHT; y++)
+                {
+                    let height = map[x][y];
+                    type = 'plain';
+                    if (0.3 <= height && height < 0.4)
+                        type = 'tree';
+                    else if (0.5 <= height && height < 0.6)
+                        type = 'pine';
+                    else if (0.6 <= height && height < 0.7)
+                        type = 'rock';
+                    else if (0.7 <= height)
+                        type = 'hill';
+
+
+                    let list_of_images = textureMap.get(type);
+                    let chosen_sprite = null;
+                    if (list_of_images)
+                    {
+                        let chosen_index = Math.floor(Math.random() * list_of_images.length);
+                        chosen_sprite = list_of_images[chosen_index];
+                    }
+
+                    map[x][y] = {
+                        'elevation': height,
+                        'type': type,
+                        'transversable': type != 'hill', // adicionar buildings para fazer com que não seja possivel passar por dentro deless
+                        'sprite': chosen_sprite,
+                    }
+                }
+
+            //paint some mountains in the middle of the hills
+            //first mark the hills enclosed by other hills
+            for (let x = 1; x < MAP_WIDTH - 1; x++)
+                for (let y = 1; y < MAP_HEIGHT - 1; y++)
+                {
+                    if (map[x][y].type == 'hill'
+                        && map[x - 1][y].type == 'hill'
+                        && map[x + 1][y].type == 'hill'
+                        && map[x][y + 1].type == 'hill'
+                        && map[x][y - 1].type == 'hill'
+                    )
+                        map[x][y].enclosed = true;
+
+                }
+            //upgrade pairs of enclosed hills into mountains
+            for (let x = 1; x < MAP_WIDTH - 1; x++)
+                for (let y = 1; y < MAP_HEIGHT - 1; y++)
+                {
+                    if (
+                        map[x][y].type == 'hill'
+                        && map[x][y].enclosed
+                        && map[x + 1][y].type == 'hill'
+                        && map[x + 1][y].enclosed
+                    )
+                    {
+                        map[x][y].type = 'mountain'
+                        map[x + 1][y].type = 'mountain'
+                        let list_of_images = textureMap.get('mountain');
+                        map[x][y].sprite = list_of_images[Math.floor(Math.random() * list_of_images.length)];
+                        map[x + 1][y].sprite
+                    }
+                }
+
+
+
+
+            // Criação do castelo
+
+            let x = Math.floor(Math.random() * (MAP_WIDTH / 10));
+            let y = Math.floor(Math.random() * (MAP_HEIGHT / 10));
+            let building = new Building();
+            building.type = 'castle';
+            building.x = x;
+            building.y = y;
+            building.width = 4;
+            building.height = 4;
+            building.player = true;
+            building.placeOnMap();
+            map[x][y].sprite = document.getElementById('Castle1');
+            buildings.push(building);
+
+        }
+
+        function buildingsPlacement(canvas, event)
+        {
+
+            let rect = canvas.getBoundingClientRect();
+            let x = event.clientX - rect.left;
+            let y = event.clientY - rect.top;
+
+            return [x, y];
+        }
+
+        function elevateTerrain(amount, center_x, center_y, radius)
+        {
+            for (let x = 0; x < MAP_WIDTH; x++)
+                for (let y = 0; y < MAP_WIDTH; y++)
+                {
+                    //distancia ao centro do circulo com o teorema de pitágoras
+                    let delta_x = x - center_x;
+                    let delta_y = y - center_y;
+                    let distance = Math.sqrt(Math.pow(delta_x, 2) + Math.pow(delta_y, 2));
+                    if (distance > radius)//esta celula está fora do circulo
+                        continue;
+                    map[x][y] += amount;
+                }
+        }
+        function drawTexture()
+        {
+            const canvas = document.getElementById("ui_map");
+            const ctx = canvas.getContext("2d");
+
+            const texture = document.getElementById("texture");//get the texture image
+            ctx.fillStyle = ctx.createPattern(texture, "repeat");//set as fill
+            ctx.fillRect(0, 0, MAP_WIDTH * CELL_WIDTH, MAP_HEIGHT * CELL_HEIGHT);
+
+            // desenhar a grelha de modo mais suave
+            ctx.beginPath();
+            ctx.strokeStyle = "#B5914A7F";
+            ctx.setLineDash([8, 4]);
+            for (let x = 0; x < MAP_WIDTH * CELL_WIDTH; x += 32)
+            {
+                ctx.moveTo(x, 0);
+                ctx.lineTo(x, MAP_HEIGHT * CELL_HEIGHT);
+            }
+            for (let y = 0; y < MAP_HEIGHT * CELL_HEIGHT; y += 32)
+            {
+                ctx.moveTo(0, y);
+                ctx.lineTo(MAP_WIDTH * CELL_WIDTH, y);
+
+            }
+            ctx.stroke();
+
+
+        }
+        function drawScenery()
+        {
+            const canvas = document.getElementById("ui_map");
+            const ctx = canvas.getContext("2d");
+            for (let x = 0; x < MAP_WIDTH; x++)
+                for (let y = 0; y < MAP_WIDTH; y++)
+                {
+                    let sprite = map[x][y]['sprite'];
+                    let type = map[x][y]['type'];
+
+                    if (!sprite)
+                    {
+                        continue;
+                    } else
+                    {
+
+                        ctx.drawImage(sprite, x * (CELL_WIDTH), y * (CELL_HEIGHT), sprite.naturalWidth, sprite.naturalHeight);
+                    }
+
+
+                }
+        }
+        //**debug draw
+        function drawGrayscale()
+        {
+            const canvas = document.getElementById("ui_map");
+            const ctx = canvas.getContext("2d");
+            for (let x = 0; x < MAP_WIDTH; x++)
+                for (let y = 0; y < MAP_WIDTH; y++)
+                {
+                    if (map[x][y].transversable)
+                        ctx.fillStyle = `rgb(0 0 0 / ${map[x][y].elevation * 100}%)`;
+                    else
+                        ctx.fillStyle = `rgb(255 0 0 / ${map[x][y].elevation * 100}%)`;
+                    ctx.fillRect(x * CELL_WIDTH, y * CELL_HEIGHT, CELL_WIDTH, CELL_HEIGHT);
+                }
+        }
+
+    </script>
+</head>
+
+<body id="dump" onload="setup()">
+    <canvas id="ui_map" width="1000" height="1000"></canvas>
+    <div style="display: none;">
+        <img id="texture" src="../assets/scroll.png">
+        <!--this element contains <img> childs that are a collection of alternate textures-->
+        <div id="trees">
+            <img id="Tree1" src="../assets/Tree1.png">
+            <img id="Tree2" src="../assets/Tree2.png">
+            <img id="Tree3" src="../assets/Tree3.png">
+            <img id="Tree4" src="../assets/Tree4.png">
+        </div>
+        <div id="pines">
+            <img id="Pine1" src="../assets/Pine1.png">
+            <img id="Pine2" src="../assets/Pine2.png">
+            <img id="Pine3" src="../assets/Pine3.png">
+        </div>
+        <div id="hills">
+            <img id="Hill1" src="../assets/Hill1.png">
+            <img id="Hill2" src="../assets/Hill2.png">
+            <img id="Hill3" src="../assets/Hill3.png">
+        </div>
+        <div id="rocks">
+            <img id="Rock1" src="../assets/Rock1.png">
+            <img id="Rock2" src="../assets/Rock2.png">
+        </div>
+        <div id="mountains">
+            <img id="Moutain1" src="../assets/Moutain1.png">
+            <img id="Moutain2" src="../assets/Moutain2.png">
+            <img id="Moutain3" src="../assets/Moutain3.png">
+        </div>
+        <div id="castles">
+            <img id="Castle1" src="../assets/Citadel.png">
+        </div>
+    </div>
+
+    <div id="button">
+        <button onload="buildingsPlacement()"></button>
+    </div>
+</body>
+
+</html>
