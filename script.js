@@ -234,8 +234,7 @@ function setup() {
                 " Current Cell X: " + unit.currentCell_x + " Current Cell Y: " + unit.currentCell_y);
             console.log(units);
 
-
-            console.log(moveUnits(map, unit.currentCell_x, unit.currentCell_y, unit.cell_x, unit.cell_y));
+            pathfinding(map, unit.currentCell_x, unit.currentCell_y, unit.cell_x, unit.cell_y)
 
         }
     })
@@ -533,67 +532,69 @@ function spawnUnits(x, y, sprite_id) {
     }
 }
 
-function moveUnits(map, x, y, x_end, y_end) {
-    let distances = {};
-    let previous = {};
-    let unvisited = new Set();
-    let blocked = new Set();
+function pathfinding(map, x, y, x_end, y_end) {
+    let closestNode = 0;
+    let node = 0
+    let cost = 0;
+    let acumulatedCost = 0;
+    let distance = [];
+    let unvisited = [];
+    let visited = [];
+    let blocked = [];
     let startPoint = [];
     let endPoint = [];
     let path = [];
 
 
-
     startPoint.push(x, y);
     endPoint.push(x_end, y_end);
 
-    for (let node of map) {
-        distances[node] = node === startPoint ? 0 : Infinity;
-        unvisited.add(node);
 
-    }
-
-    while (unvisited.size) {
-        let closestNode = 0;
-        for (let node of unvisited) {
-            if (!closestNode || distances[node] < distances[closestNode]) {
-                closestNode = node;
-            }
-        }
-
-        if (distances[closestNode] === Infinity) break;
-        if (closestNode === endPoint) break;
-
-        for (let neighbor in map[closestNode]) {
-            if (!map[closestNode][neighbor].transversable) {
-                blocked.add(node);
-
+    for (let x = 0; x < MAP_WIDTH; x++) {
+        for (let y = 0; y < MAP_HEIGHT; y++) {
+            node = [x][y];
+            if (node === startPoint) {
+                distance[node] = 0;
             } else {
-                let newDistance = distances[closestNode + map[closestNode][neighbor]];
-                if (newDistance < distances[neighbor]) {
-                    distances[neighbor] = newDistance;
-                    previous[neighbor] = closestNode;
-                }
+                cost = map[x][y].cost;
+                distance[node] = cost;
             }
         }
-        unvisited.delete(closestNode);
-        path.push(closestNode);
     }
+    unvisited.push(node);
 
 
-    let node = endPoint;
+    while (unvisited.length != 0) {
+        for (let node of unvisited) {
+            if (distance[node] < distance[closestNode]) {
+                closestNode = node;
+                acumulatedCost = distance[closestNode] + distance[node]; 
+            }
+        }
 
-    while (node) {
-
+        for (let neighbor of map[closestNode]) {
+            let newDistance = acumulatedCost + distance[neighbor];
+            if (newDistance < distance[neighbor]) {
+                distance[neighbor] = newDistance;
+                visited[neighbor] = closestNode;
+            }
+        }
+        unvisited.shift(closestNode);
         path.push(node);
-        node = previous[node];
     }
-    console.log(blocked);
-    console.log(unvisited);
+
     path.reverse();
-    return path;
 
-
+    console.log("distance: " + distance);
+    console.log("unvisited: " + unvisited);
+    console.log("visited: " + visited);
+    console.log("blocked: " + blocked);
+    console.log("startPoint: " + startPoint);
+    console.log("endPoint: " + endPoint);
+    console.log("closestNode: " + closestNode);
+    console.log("path: " + path);
+    console.log("cost: " + cost);
+    console.log("acumulatedCost: " + acumulatedCost);
 }
 
 function UserClicked() {
