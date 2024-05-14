@@ -21,7 +21,7 @@ class Engine {
             let x = Math.floor(Math.random() * (MAP_WIDTH) + 1);
             let y = Math.floor(Math.random() * (MAP_HEIGHT) + 1);
 
-            if (x > building.castle_x + 1 && y > building.castle_y + 1 && map[x][y].type != 'hill') {
+            if (x > building.castle_x + 1 && y > building.castle_y + 1 && map[x][y].type != 'hill' || map[x][y].type != 'mountain') {
                 placeBuildings('castleAI', x, y, 1, 4, 4, 'Castle1', false);
 
             } else {
@@ -159,11 +159,7 @@ class Unit {
     cell_x = this.target_x / CELL_WIDTH;
     cell_y = this.target_y / CELL_HEIGHT;
 
-
-    //method to make the calculations for the units movement
-    move(elpased) {
-
-
+    move(elapsed) {
         this.currentCell_x = Math.floor(this.x / CELL_WIDTH);
         this.currentCell_y = Math.floor(this.y / CELL_HEIGHT);
 
@@ -171,20 +167,18 @@ class Unit {
         let delta_x = this.target_x - this.x;
         let delta_y = this.target_y - this.y;
         let distance = Math.sqrt(Math.pow(delta_x, 2) + Math.pow(delta_y, 2));
-
-        if (distance < 1) { //if the distance is lower than one there is no need to move the unit because its too close
-            return;
-        }
-        //
+        if (distance < 1) //if the distance is lower than one there is no need to move the unit because its too close
+            return
+        //turn this into a vector between 0 and 1 pointing in the right direction
         let normalized_x = delta_x / distance;
         let normalized_y = delta_y / distance;
         //calculate the amount of PX we will travel in X milliseconds, we will travel at 32px per second
-        let amount_to_travel = (elpased * this.speed) / 1000;
-        //get the cost for travelling in the current terrain | plains = faster, hills = lower 
+        let amount_traveled = (elapsed * this.speed) / 1000;
+        //get the cost for travelling in the current terrain | plains = faster, hills = slower 
         let cost = map[Math.floor(this.x / CELL_WIDTH)][Math.floor(this.y / CELL_HEIGHT)].cost;
         //calculate the amount of px we will travel with terrain penalties
-        this.x += (amount_to_travel * normalized_x) / cost;
-        this.y += (amount_to_travel * normalized_y) / cost;
+        this.x += (amount_traveled * normalized_x) / cost;
+        this.y += (amount_traveled * normalized_y) / cost;
     }
 }
 
@@ -234,8 +228,7 @@ function setup() {
                 " Current Cell X: " + unit.currentCell_x + " Current Cell Y: " + unit.currentCell_y);
             console.log(units);
 
-            pathfinding(map, unit.currentCell_x, unit.currentCell_y, unit.cell_x, unit.cell_y)
-
+            console.log(pathfinding(map, unit.currentCell_x, unit.currentCell_y, unit.cell_x, unit.cell_y))
         }
     })
 
@@ -244,6 +237,7 @@ function setup() {
     textureMap.set('hill', document.getElementById('hills').children);
     textureMap.set('pine', document.getElementById('pines').children);
     textureMap.set('rock', document.getElementById('rocks').children);
+    textureMap.set('mountain', document.getElementById('mountains').children);
     textureMap.set('castle', document.getElementById('castles').children);
     textureMap.set('infantries', document.getElementById('infantries').children);
 
@@ -308,7 +302,6 @@ function initializeTerrain() {
                 cost = 5;
             }
 
-
             let list_of_images = textureMap.get(type);
             let chosen_sprite = null;
             if (list_of_images) {
@@ -317,11 +310,46 @@ function initializeTerrain() {
             }
 
             map[x][y] = {
+                'x': x,
+                'y': y,
                 'elevation': height,
                 'type': type,
                 'transversable': type != 'hill', // adicionar buildings para fazer com que não seja possivel passar por dentro deless
                 'cost': cost,
                 'sprite': chosen_sprite,
+            }
+        }
+
+    //paint some mountains in the middle of the hills
+    //first mark the hills enclosed by other hills
+    for (let x = 1; x < MAP_WIDTH - 1; x++)
+        for (let y = 1; y < MAP_HEIGHT - 1; y++) {
+            if (map[x][y].type == 'hill' &&
+                map[x - 1][y].type == 'hill' &&
+                map[x + 1][y].type == 'hill' &&
+                map[x][y + 1].type == 'hill' &&
+                map[x][y - 1].type == 'hill'
+            )
+                map[x][y].enclosed = true;
+
+        }
+    //upgrade pairs of enclosed hills into mountains
+    for (let x = 1; x < MAP_WIDTH - 1; x++)
+        for (let y = 1; y < MAP_HEIGHT - 1; y++) {
+            if (
+                map[x][y].type == 'hill' &&
+                map[x][y].enclosed &&
+                map[x + 1][y].type == 'hill' &&
+                map[x + 1][y].enclosed
+            ) {
+                map[x][y].type = 'mountain';
+                map[x + 1][y].type = 'mountain';
+                if (map[x][y].type == 'mountain') {
+                    map[x][y].cost = Infinity;
+                }
+                let list_of_images = textureMap.get('mountain');
+                map[x][y].sprite = list_of_images[Math.floor(Math.random() * list_of_images.length)];
+                map[x + 1][y].sprite;
             }
         }
 
@@ -533,72 +561,77 @@ function spawnUnits(x, y, sprite_id) {
 }
 
 function pathfinding(map, x, y, x_end, y_end) {
-    let closestNode = 0;
-    let node = 0
-    let cost = 0;
-    let acumulatedCost = 0;
-    let distance = [];
-    let unvisited = [];
-    let visited = [];
-    let blocked = [];
-    let startPoint = [];
-    let endPoint = [];
+
+    let visited = new Array(MAP_WIDTH).fill(false).map(() => new Array(MAP_HEIGHT).fill(false));
+    let distances = new Array(MAP_WIDTH).fill(Infinity).map(() => new Array(MAP_HEIGHT).fill(Infinity));
+    let previous = new Array(MAP_WIDTH).fill(null).map(() => new Array(MAP_HEIGHT).fill(null));
+
+    let startPoint = { 'x': x, 'y': y };
+    let endPoint = { 'x': x_end, 'y': y_end };
+
+    let currentNode = { 'x': startPoint.x, 'y': startPoint.y, 'cost': 0 };
+
+    while (!(currentNode.x === endPoint.x && currentNode.y === endPoint.y)) {
+        visited[currentNode.x][currentNode.y] = true;
+
+        // Update neighbors' distances
+        const neighbors = getNeighbors(map, currentNode.x, currentNode.y);
+        for (const neighbor of neighbors) {
+            const { 'x': nx, 'y': ny, 'cost': cost } = neighbor;
+            if (!visited[nx][ny]) {
+                const newDistance = currentNode.cost + cost;
+                if (newDistance < distances[nx][ny]) {
+                    distances[nx][ny] = newDistance;
+                    previous[nx][ny] = { 'x': currentNode.x, 'y': currentNode.y };
+                }
+            }
+        }
+
+        // Find the closest unvisited node
+        let minDistance = Infinity;
+        for (let i = 0; i < MAP_WIDTH; i++) {
+            for (let j = 0; j < MAP_HEIGHT; j++) {
+                if (!visited[i][j] && distances[i][j] < minDistance) {
+                    minDistance = distances[i][j];
+                    currentNode = { 'x': i, 'y': j, 'cost': minDistance };
+                }
+            }
+        }
+
+        // No unvisited nodes left or endpoint unreachable
+        if (minDistance === Infinity) {
+            return null; // No path found
+        }
+    }
+
+    // Reconstruct path
     let path = [];
-
-
-    startPoint.push(x, y);
-    endPoint.push(x_end, y_end);
-
-
-    for (let x = 0; x < MAP_WIDTH; x++) {
-        for (let y = 0; y < MAP_HEIGHT; y++) {
-            node = [x][y];
-            if (node === startPoint) {
-                distance[node] = 0;
-            } else {
-                cost = map[x][y].cost;
-                distance[node] = cost;
-            }
-        }
-    }
-    unvisited.push(node);
-
-
-    while (unvisited.length != 0) {
-        for (let node of unvisited) {
-            if (distance[node] < distance[closestNode]) {
-                closestNode = node;
-                acumulatedCost = distance[closestNode] + distance[node]; 
-            }
-        }
-
-        for (let neighbor of map[closestNode]) {
-            let newDistance = acumulatedCost + distance[neighbor];
-            if (newDistance < distance[neighbor]) {
-                distance[neighbor] = newDistance;
-                visited[neighbor] = closestNode;
-            }
-        }
-        unvisited.shift(closestNode);
-        path.push(node);
+    let current = endPoint;
+    while (current) {
+        path.unshift(current);
+        current = previous[current.x][current.y];
     }
 
-    path.reverse();
+    return path;
+}
 
-    console.log("distance: " + distance);
-    console.log("unvisited: " + unvisited);
-    console.log("visited: " + visited);
-    console.log("blocked: " + blocked);
-    console.log("startPoint: " + startPoint);
-    console.log("endPoint: " + endPoint);
-    console.log("closestNode: " + closestNode);
-    console.log("path: " + path);
-    console.log("cost: " + cost);
-    console.log("acumulatedCost: " + acumulatedCost);
+function getNeighbors(map, x, y) {
+    const neighbors = [];
+    const directions = [[-1, 0], [1, 0], [0, -1], [0, 1]]; // Adjacent cells
+
+    for (const [dx, dy] of directions) {
+        const nx = x + dx;
+        const ny = y + dy;
+        if (nx >= 0 && nx < map.length && ny >= 0 && ny < map[0].length) {
+            neighbors.push({ 'x': nx, 'y': ny, 'cost': map[nx][ny].cost });
+        }
+    }
+
+    return neighbors;
 }
 
 function UserClicked() {
-    /*
+
     const canvas = document.getElementById("ui_map");
     const ctx = canvas.getContext("2d");
     canvas.addEventListener("mousedown", function (e) {
@@ -611,7 +644,7 @@ function UserClicked() {
         }
         //placeBuildings('lumberCamp', x, y, 1, 2, 2, 'Lumber1', true);
     });
-*/
+
 }
 
 
@@ -647,13 +680,20 @@ function drawTexture() {
     const texture = document.getElementById("texture"); //get the texture image
     ctx.fillStyle = ctx.createPattern(texture, "repeat"); //set as fill
     ctx.fillRect(0, 0, MAP_WIDTH * CELL_WIDTH, MAP_HEIGHT * CELL_HEIGHT);
-    /*
-        for (let x = 0; x < MAP_WIDTH * CELL_WIDTH; x += 32)
-            for (let y = 0; y < MAP_WIDTH * CELL_WIDTH; y += 32) {
-                ctx.strokeStyle = "rgb(0 0 0 / 20%)";
-                ctx.strokeRect(x, y, 32, 32);
-            }
-    */
+    // desenhar a grelha de modo mais suave
+    ctx.beginPath();
+    ctx.strokeStyle = "#B5914A7F";
+    ctx.setLineDash([8, 4]);
+    for (let x = 0; x < MAP_WIDTH * CELL_WIDTH; x += 32) {
+        ctx.moveTo(x, 0);
+        ctx.lineTo(x, MAP_HEIGHT * CELL_HEIGHT);
+    }
+    for (let y = 0; y < MAP_HEIGHT * CELL_HEIGHT; y += 32) {
+        ctx.moveTo(0, y);
+        ctx.lineTo(MAP_WIDTH * CELL_WIDTH, y);
+
+    }
+    ctx.stroke();
 
 
 }
