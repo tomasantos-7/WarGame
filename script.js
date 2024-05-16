@@ -150,14 +150,14 @@ class Unit {
     x = 0;
     y = 0;
     //current cell 
-    currentCell_x = 0;
-    currentCell_y = 0;
+    currentCell_x = Math.floor(this.x / CELL_WIDTH);
+    currentCell_y = Math.floor(this.y / CELL_HEIGHT);
     //target position in pixels
     target_x = 0;
     target_y = 0;
     //target cell coords
-    cell_x = this.target_x / CELL_WIDTH;
-    cell_y = this.target_y / CELL_HEIGHT;
+    cell_x = Math.floor(this.target_x / CELL_WIDTH);
+    cell_y = Math.floor(this.target_y / CELL_HEIGHT);
 
     move(elapsed) {
         this.currentCell_x = Math.floor(this.x / CELL_WIDTH);
@@ -177,8 +177,15 @@ class Unit {
         //get the cost for travelling in the current terrain | plains = faster, hills = slower 
         let cost = map[Math.floor(this.x / CELL_WIDTH)][Math.floor(this.y / CELL_HEIGHT)].cost;
         //calculate the amount of px we will travel with terrain penalties
-        this.x += (amount_traveled * normalized_x) / cost;
-        this.y += (amount_traveled * normalized_y) / cost;
+        let path = pathfinding(map, this.currentCell_x, this.currentCell_y, this.cell_x, this.cell_y);
+
+        for (let i = 0; i < path.length; i++) {
+            let path_x = path[i].x / CELL_WIDTH;
+            let path_y = path[i].y / CELL_WIDTH;
+            this.x += (path_x * normalized_x) / cost;
+            this.y += (path_y * normalized_y) / cost;
+
+        }
     }
 }
 
@@ -188,7 +195,7 @@ let building = new Building();
 let ai_building = new Building();
 let engine = new Engine();
 
-let drawPath = false;
+
 
 //cria um array de arrays, com o tamanho (MAP_WIDTH x MAP_HEIGHT) tudo inicializado a 0;
 const map = new Array(MAP_WIDTH).fill(0).map(() => new Array(MAP_HEIGHT).fill(0));
@@ -199,38 +206,6 @@ function setup() {
     const ui_map = document.getElementById("ui_map");
     ui_map.setAttribute("width", MAP_WIDTH * CELL_WIDTH);
     ui_map.setAttribute("height", MAP_HEIGHT * CELL_HEIGHT);
-    //create a new canvas to load only the movement of units
-    const ui_units = document.getElementById("ui_units");
-    ui_units.setAttribute("width", MAP_WIDTH * CELL_WIDTH);
-    ui_units.setAttribute("height", MAP_HEIGHT * CELL_HEIGHT);
-
-    ui_units.addEventListener('click', function (event) {
-        //get the coords of the destination
-        let mouse_x = event.offsetX;
-        let mouse_y = event.offsetY;
-        //conversion of the cells to px
-        let cell_x = Math.floor(mouse_x / CELL_WIDTH);
-        let cell_y = Math.floor(mouse_y / CELL_HEIGHT);
-        for (let i = 0; i < units.length; i++) {
-            let unit = units[i];
-            if (!unit.selected)
-                continue;
-            //coords in grid
-            unit.cell_x = cell_x;
-            unit.cell_y = cell_y;
-            //coords in pixels
-            unit.target_x = cell_x * CELL_WIDTH;
-            unit.target_y = cell_y * CELL_HEIGHT;
-
-            console.log("Grid X:" + unit.cell_x + " Y: " + unit.cell_y +
-                " Pixels X: " + unit.target_x + " Y: " + unit.target_y +
-                " Caslte X: " + building.castle_x + " Castle Y: " + building.castle_y +
-                " Current Cell X: " + unit.currentCell_x + " Current Cell Y: " + unit.currentCell_y);
-            console.log(units);
-
-            console.log(pathfinding(map, unit.currentCell_x, unit.currentCell_y, unit.cell_x, unit.cell_y))
-        }
-    })
 
     //load into variables
     textureMap.set('tree', document.getElementById('trees').children);
@@ -544,7 +519,6 @@ function placeBuildings(type, x, y, amount_per_second, width, height, sprite_id,
     }
 }
 
-
 function spawnUnits(x, y, sprite_id) {
     if (player.amount_soldier > 0) {
         if (map[x][y].type == 'plain') {
@@ -566,45 +540,66 @@ function pathfinding(map, x, y, x_end, y_end) {
     let distances = new Array(MAP_WIDTH).fill(Infinity).map(() => new Array(MAP_HEIGHT).fill(Infinity));
     let previous = new Array(MAP_WIDTH).fill(null).map(() => new Array(MAP_HEIGHT).fill(null));
 
-    let startPoint = { 'x': x, 'y': y };
-    let endPoint = { 'x': x_end, 'y': y_end };
+    let startPoint = {
+        'x': x,
+        'y': y
+    };
+    let endPoint = {
+        'x': x_end,
+        'y': y_end
+    };
 
-    let currentNode = { 'x': startPoint.x, 'y': startPoint.y, 'cost': 0 };
+    let currentNode = {
+        'x': startPoint.x,
+        'y': startPoint.y,
+        'cost': 0
+    };
 
     while (!(currentNode.x === endPoint.x && currentNode.y === endPoint.y)) {
         visited[currentNode.x][currentNode.y] = true;
 
-        // Update neighbors' distances
+        // update neighbors' distances
         const neighbors = getNeighbors(map, currentNode.x, currentNode.y);
         for (const neighbor of neighbors) {
-            const { 'x': nx, 'y': ny, 'cost': cost } = neighbor;
+            const {
+                'x': nx,
+                'y': ny,
+                'cost': cost
+            } = neighbor;
             if (!visited[nx][ny]) {
                 const newDistance = currentNode.cost + cost;
                 if (newDistance < distances[nx][ny]) {
                     distances[nx][ny] = newDistance;
-                    previous[nx][ny] = { 'x': currentNode.x, 'y': currentNode.y };
+                    previous[nx][ny] = {
+                        'x': currentNode.x,
+                        'y': currentNode.y
+                    };
                 }
             }
         }
 
-        // Find the closest unvisited node
+        // find the closest unvisited node
         let minDistance = Infinity;
         for (let i = 0; i < MAP_WIDTH; i++) {
             for (let j = 0; j < MAP_HEIGHT; j++) {
                 if (!visited[i][j] && distances[i][j] < minDistance) {
                     minDistance = distances[i][j];
-                    currentNode = { 'x': i, 'y': j, 'cost': minDistance };
+                    currentNode = {
+                        'x': i,
+                        'y': j,
+                        'cost': minDistance
+                    };
                 }
             }
         }
 
-        // No unvisited nodes left or endpoint unreachable
+        // no unvisited nodes left or endpoint unreachable
         if (minDistance === Infinity) {
-            return null; // No path found
+            return null; // no path found
         }
     }
 
-    // Reconstruct path
+    // reconstruct path
     let path = [];
     let current = endPoint;
     while (current) {
@@ -617,34 +612,54 @@ function pathfinding(map, x, y, x_end, y_end) {
 
 function getNeighbors(map, x, y) {
     const neighbors = [];
-    const directions = [[-1, 0], [1, 0], [0, -1], [0, 1]]; // Adjacent cells
+    const directions = [
+        [-1, 0],
+        [1, 0],
+        [0, -1],
+        [0, 1]
+    ]; // adjacent cells
 
     for (const [dx, dy] of directions) {
         const nx = x + dx;
         const ny = y + dy;
         if (nx >= 0 && nx < map.length && ny >= 0 && ny < map[0].length) {
-            neighbors.push({ 'x': nx, 'y': ny, 'cost': map[nx][ny].cost });
+            neighbors.push({
+                'x': nx,
+                'y': ny,
+                'cost': map[nx][ny].cost
+            });
         }
     }
 
     return neighbors;
 }
 
-function UserClicked() {
+function moveUnits() {
 
-    const canvas = document.getElementById("ui_map");
-    const ctx = canvas.getContext("2d");
-    canvas.addEventListener("mousedown", function (e) {
-        let values = getCoordinates(canvas, e);
-        let x = values[0];
-        let y = values[1];
-        if (x != player.soldier_x && y != player.soldier_y) {
-            console.log(moveUnits(map, player.soldier_x, player.soldier_y, x, y));
-            drawPath = true;
+    //create a new canvas to load only the movement of units
+    const ui_units = document.getElementById("ui_units");
+    ui_units.setAttribute("width", MAP_WIDTH * CELL_WIDTH);
+    ui_units.setAttribute("height", MAP_HEIGHT * CELL_HEIGHT);
+
+    ui_units.addEventListener('click', function (event) {
+        //get the coords of the destination
+        let mouse_x = event.offsetX;
+        let mouse_y = event.offsetY;
+        //conversion of the cells to px
+        let cell_x = Math.floor(mouse_x / CELL_WIDTH);
+        let cell_y = Math.floor(mouse_y / CELL_HEIGHT);
+        for (let i = 0; i < units.length; i++) {
+            let unit = units[i];
+            if (!unit.selected)
+                continue;
+            //coords in grid
+            unit.cell_x = cell_x;
+            unit.cell_y = cell_y;
+            //coords in pixels
+            unit.target_x = cell_x * CELL_WIDTH;
+            unit.target_y = cell_y * CELL_HEIGHT;
         }
-        //placeBuildings('lumberCamp', x, y, 1, 2, 2, 'Lumber1', true);
     });
-
 }
 
 
@@ -753,5 +768,71 @@ function drawUnits() {
         let draw_x = unit.x - unit.sprite.naturalWidth / 2 + CELL_WIDTH / 2;
         let draw_y = unit.y - unit.sprite.naturalHeight / 2 + CELL_HEIGHT / 2;
         ctx.drawImage(unit.sprite, unit.x, unit.y, unit.sprite.naturalWidth, unit.sprite.naturalHeight);
+
     }
+}
+
+function drawPath() {
+    for (let i = 0; i < units.length; i++) {
+        let unit = units[i];
+        let path = pathfinding(map, unit.currentCell_x, unit.currentCell_y, unit.cell_x, unit.cell_y);
+        let path2 = path.shift();
+        ctx.beginPath();
+        ctx.strokeStyle = "white";
+        ctx.setLineDash([]);
+        ctx.moveTo(unit.currentCell_x, unit.currentCell_y);
+        ctx.lineTo(path2.x, path2.y);
+        ctx.stroke();
+    }
+}
+
+
+function showButtons() {
+    for (let i = 1; i <= 4; i++) {
+        if (document.getElementById("menuMembers" + i).style.display == "none") {
+            document.getElementById("menuMembers" + i).style.display = "inline-block";
+        } else {
+            document.getElementById("menuMembers" + i).style.display = "none";
+        }
+    }
+}
+
+function placeLumbermill() {
+    const canvas = document.getElementById("ui_map");
+    canvas.addEventListener("click", function (e) {
+        let values = getCoordinates(canvas, e);
+        let x = values[0];
+        let y = values[1];
+        placeBuildings('lumberCamp', x, y, 1, 2, 2, 'Lumber1', true);
+    });
+}
+
+function placeQuarry() {
+    const canvas = document.getElementById("ui_map");
+    canvas.addEventListener("click", function (e) {
+        let values = getCoordinates(canvas, e);
+        let x = values[0];
+        let y = values[1];
+        placeBuildings('quarry', x, y, 1, 2, 2, 'Quarry1', true);
+    });
+}
+
+function placeBank() {
+    const canvas = document.getElementById("ui_map");
+    canvas.addEventListener("click", function (e) {
+        let values = getCoordinates(canvas, e);
+        let x = values[0];
+        let y = values[1];
+        placeBuildings('bank', x, y, 1, 2, 2, 'Bank1', true);
+    });
+}
+
+function placeBarracks() {
+    const canvas = document.getElementById("ui_map");
+    canvas.addEventListener("click", function (e) {
+        let values = getCoordinates(canvas, e);
+        let x = values[0];
+        let y = values[1];
+        placeBuildings('barracks', x, y, 1, 2, 2, 'Barracks1', true);
+    });
 }

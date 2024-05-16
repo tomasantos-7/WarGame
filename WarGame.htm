@@ -22,13 +22,13 @@
             <div id="goldstatus" class="status" title="Gold : " style="--icon:url('assets/money.png');"> </div>
         </div>
 
-        <button class="paper">Select</button>
+        <button class="paper" onclick="moveUnits()">Select</button>
         <button class="paper" onclick="showButtons()">Menu</button>
         <div>
-            <button id="menuMembers1" class="paperMenu">Lumbermill</button>
-            <button id="menuMembers2" class="paperMenu">Stonemason</button>
-            <button id="menuMembers3" class="paperMenu">Bank</button>
-            <button id="menuMembers4" class="paperMenu">Barracks</button>
+            <button id="menuMembers1" class="paperMenu" onclick="placeLumbermill()">Lumbermill</button>
+            <button id="menuMembers2" class="paperMenu" onclick="placeQuarry()">Stonemason</button>
+            <button id="menuMembers3" class="paperMenu" onclick="placeBank()">Bank</button>
+            <button id="menuMembers4" class="paperMenu" onclick="placeBarracks()">Barracks</button>
         </div>
 
     </div>
