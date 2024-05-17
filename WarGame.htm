@@ -11,7 +11,7 @@
 
 <body id="dump" onload="setup()">
     <canvas id="ui_map" width="1000" height="1000"></canvas>
-    <canvas id="ui_units" width="1000" height="1000"></canvas>
+    <!--<canvas id="ui_units" width="1000" height="1000"></canvas>-->
 
     <div class="toolbar">
 
@@ -24,14 +24,26 @@
 
         <button class="paper" onclick="moveUnits()">Select</button>
         <button class="paper" onclick="showButtons()">Menu</button>
-        <div>
+        <div class="tooltipLumber">
             <button id="menuMembers1" class="paperMenu" onclick="placeLumbermill()">Lumbermill</button>
-            <button id="menuMembers2" class="paperMenu" onclick="placeQuarry()">Stonemason</button>
-            <button id="menuMembers3" class="paperMenu" onclick="placeBank()">Bank</button>
-            <button id="menuMembers4" class="paperMenu" onclick="placeBarracks()">Barracks</button>
+            <span class="tooltipLumberText">x10 Comida +1 Madeira</span>
         </div>
-
+        <div class="tooltipQuarry">
+            <button id="menuMembers2" class="paperMenu" onclick="placeQuarry()">Quarry</button>
+            <span class="tooltipQuarryText">x10 Comida x10 Madeira +1 Pedra</span>
+        </div>
+        <div class="tooltipBank">
+            <button id="menuMembers3" class="paperMenu" onclick="placeBank()">Bank</button>
+            <span class="tooltipBankText">x20 Madeira x20 Pedra +2 Ouro</span>
+        </div>
+        <div class="tooltipBarracks">
+            <button id="menuMembers4" class="paperMenu" onclick="placeBarracks()">Barracks</button>
+            <span class="tooltipBarracksText">x10 Comida x15 Pedra +1 Soldado</span>
+        </div>
+            
     </div>
+
+    
 
     <div style="display: none;">
         <img id="texture" src="assets/scroll.png">

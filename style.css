@@ -102,8 +102,6 @@ canvas {
     transform: rotate(3deg);
 }
 
-
-
 .toolbar .statusbar {
     display: flex;
     gap: 20px;
@@ -135,4 +133,152 @@ canvas {
     width: 24px;
     height: 24px;
     grid-column-start: 3;
+}
+
+
+.tooltipLumber{
+    position: relative;
+    display: inline-block;
+}
+
+.tooltipLumber .tooltipLumberText{
+    visibility: hidden;
+    width: 120px;
+    background-color: #665537;
+    color: #fff;
+    text-align: center;
+    padding: 5px 0;
+    border-radius: 6px;
+    position: absolute;
+    z-index: 1;
+    top: 120%;
+    left: 50%;
+    margin-left: -60px;
+    font-size: 30px;
+}
+
+.tooltipLumber:hover .tooltipLumberText{
+    visibility: visible;
+}
+
+.tooltipLumber .tooltipLumberText::after{
+    content: " ";
+    position: absolute;
+    bottom: 100%;
+    left: 50%;
+    margin-left: -5px;
+    border-width: 5px;
+    border-style: solid;
+    border-color: transparent transparent #665537 transparent;
+}
+
+.tooltipQuarry{
+    position: relative;
+    display: inline-block;
+}
+
+.tooltipQuarry .tooltipQuarryText{
+    visibility: hidden;
+    width: 120px;
+    background-color: #665537;
+    color: #fff;
+    text-align: center;
+    padding: 5px 0;
+    border-radius: 6px;
+    position: absolute;
+    z-index: 1;
+    top: 120%;
+    left: 50%;
+    margin-left: -60px;
+    font-size: 30px;
+}
+
+.tooltipQuarry:hover .tooltipQuarryText{
+    visibility: visible;
+}
+
+.tooltipQuarry .tooltipQuarryText::after{
+    content: " ";
+    position: absolute;
+    bottom: 100%;
+    left: 50%;
+    margin-left: -5px;
+    border-width: 5px;
+    border-style: solid;
+    border-color: transparent transparent #665537 transparent;
+}
+
+
+
+.tooltipBank{
+    position: relative;
+    display: inline-block;
+}
+
+.tooltipBank .tooltipBankText{
+    visibility: hidden;
+    width: 120px;
+    background-color: #665537;
+    color: #fff;
+    text-align: center;
+    padding: 5px 0;
+    border-radius: 6px;
+    position: absolute;
+    z-index: 1;
+    top: 120%;
+    left: 50%;
+    margin-left: -60px;
+    font-size: 30px;
+}
+
+.tooltipBank:hover .tooltipBankText{
+    visibility: visible;
+}
+
+.tooltipBank .tooltipBankText::after{
+    content: " ";
+    position: absolute;
+    bottom: 100%;
+    left: 50%;
+    margin-left: -5px;
+    border-width: 5px;
+    border-style: solid;
+    border-color: transparent transparent #665537 transparent;
+}
+
+
+.tooltipBarracks{
+    position: relative;
+    display: inline-block;
+}
+
+.tooltipBarracks .tooltipBarracksText{
+    visibility: hidden;
+    width: 120px;
+    background-color: #665537;
+    color: #fff;
+    text-align: center;
+    padding: 5px 0;
+    border-radius: 6px;
+    position: absolute;
+    z-index: 1;
+    top: 120%;
+    left: 50%;
+    margin-left: -60px;
+    font-size: 30px;
+}
+
+.tooltipBarracks:hover .tooltipBarracksText{
+    visibility: visible;
+}
+
+.tooltipBarracks .tooltipBarrackskText::after{
+    content: " ";
+    position: absolute;
+    bottom: 100%;
+    left: 50%;
+    margin-left: -5px;
+    border-width: 5px;
+    border-style: solid;
+    border-color: transparent transparent #665537 transparent;
 }
