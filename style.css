@@ -272,7 +272,7 @@ canvas {
     visibility: visible;
 }
 
-.tooltipBarracks .tooltipBarrackskText::after{
+.tooltipBarracks .tooltipBarracksText::after{
     content: " ";
     position: absolute;
     bottom: 100%;
@@ -281,4 +281,75 @@ canvas {
     border-width: 5px;
     border-style: solid;
     border-color: transparent transparent #665537 transparent;
+}
+
+.buildWindow{
+    position: fixed;
+    bottom: 10px;
+    left: 0px;
+    width: 21%;
+    height: 20%;
+    margin-left: 10px;
+    background-color: #634f29;
+    box-shadow: 3px 3px 3px 3px rgba(0, 0, 0, 0.7);
+    visibility: hidden;
+}
+
+.buildWindow .buildWindowText{
+    color: #fff;
+    text-align: center;
+    padding: 5px 0;
+    border-radius: 6px;
+    top: 120%;
+    left: 50%;
+    margin-left: 10px;
+    font-size: 40px;
+}
+.buildWindow .buildWindowText2{
+    color: #fff;
+    text-align: center;
+    padding: 5px 0;
+    border-radius: 6px;
+    bottom: 0px;
+    left: 50%;
+    margin-left: 15px;
+    font-size: 30px;
+}
+
+.buildWindow button{
+    cursor: pointer;
+}
+
+.buildWindow .paperButton {
+    color: inherit;
+    position: relative;
+    font-family: inherit;
+    font-size: inherit;
+    border-width: 1px;
+    border-style: solid;
+    border-color: #B5914A;
+    border-radius: 255px 15px 225px 15px/15px 225px 15px 255px;
+    background-color: #E6CA8E;
+    padding: 2px 20px;
+    top: 5%;
+    left: 100px;
+}
+
+.buildWindow .paperButton:before,
+.buildWindow .paperButton:after {
+    content: "";
+    position: absolute;
+    z-index: -1;
+    bottom: 5px;
+    left: 0px;
+    width: 50%;
+    height: 10px;
+    box-shadow: 0 10px 5px 0px rgba(0, 0, 0, 0.7);
+    transform: rotate(-3deg);
+}
+
+.buildWindow .paperButton:after {
+    right: 0px;
+    left: auto;
+    transform: rotate(3deg);
 }

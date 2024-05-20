@@ -20,6 +20,10 @@
             <div id="woodstatus" class="status" title="Wood : " style="--icon:url('assets/wood.png');"> </div>
             <div id="stonestatus" class="status" title="Stone : " style="--icon:url('assets/stone.png');"> </div>
             <div id="goldstatus" class="status" title="Gold : " style="--icon:url('assets/money.png');"> </div>
+            <div id="foodAI" class="status" title="Food : " style="--icon:url('assets/food.png');"> </div>
+            <div id="woodAI" class="status" title="Wood : " style="--icon:url('assets/wood.png');"> </div>
+            <div id="stoneAI" class="status" title="Stone : " style="--icon:url('assets/stone.png');"> </div>
+            <div id="goldAI" class="status" title="Gold : " style="--icon:url('assets/money.png');"> </div>
         </div>
 
         <button class="paper" onclick="moveUnits()">Select</button>
@@ -38,12 +42,18 @@
         </div>
         <div class="tooltipBarracks">
             <button id="menuMembers4" class="paperMenu" onclick="placeBarracks()">Barracks</button>
-            <span class="tooltipBarracksText">x10 Comida x15 Pedra +1 Soldado</span>
+            <span class="tooltipBarracksText">x10 Comida x15 Pedra</span>
         </div>
             
     </div>
 
-    
+    <div id="buildingsWindow" class="buildWindow">
+        <span class="buildWindowText">Barracks</span>
+        <button id="unitButton" class="paperButton" onclick="drawUnits()">Infantry</button>
+        <br>
+        <br>
+        <span class="buildWindowText2">x10 Comida x10 Ouro +1 Infantaria</span>    
+    </div>
 
     <div style="display: none;">
         <img id="texture" src="assets/scroll.png">
@@ -75,6 +85,9 @@
         </div>
         <div id="castles">
             <img id="Castle1" src="assets/Citadel.png">
+        </div>
+        <div id="farms">
+            <img id="Farm1" src="assets/Farm.png">
         </div>
         <div id="lumber">
             <img id="Lumber1" src="assets/Lumbermill.png">
