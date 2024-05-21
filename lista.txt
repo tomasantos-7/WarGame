@@ -32,3 +32,16 @@ Problemas resolvidos:
     -Incremento de recusos.
 Foram criadas variaveis dentro das classes e cada uma identifica a construção ou o recurso. Desta maneira foi mais fácil de construir o código e estruturá-lo.
 Para a resolução dos recursos, sempre que um edificio é construido, é criado um novo objeto que guarda as suas propriedades desta forma evitou-se o "overwriting" do objeto o que causava uma duplicação dos recursos.
+
+
+20/05/2024
+
+Todos os problemas anteriores foram resolvidos até à data.
+-Botões de construção: Funcionais;
+-ToolBar e ToolTip: Funcionais;
+-Movimento e Pathfinding: Funcional mas necessita de ajustes;
+-AI: Não Funcional;
+
+Resolver: Problemas com os recursos da AI está a acontecer o mesmo que acontecia com os recursos do player.
+
+

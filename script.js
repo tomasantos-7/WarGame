@@ -2,6 +2,7 @@ const MAP_WIDTH = 100;
 const MAP_HEIGHT = 100;
 const CELL_WIDTH = 32;
 const CELL_HEIGHT = 32;
+const engines = [];
 const buildings = [];
 const players = [];
 const units = [];
@@ -11,56 +12,74 @@ let target_cell = [];
 
 class Engine {
 
-
+    passed = false;
+    lumberCamp = 0;
+    quarry = 0;
+    bank = 0;
+    barracks = 0;
 
     build() {
 
         //CASTLE
+        for (let i = 0; i < buildings.length; i++) {
+            let ai_building = buildings[i];
 
-        if (ai_building.castle < 1) {
-            let passed = false;
-            while (passed == false) {
-                let x = Math.floor(Math.random() * (MAP_WIDTH));
-                let y = Math.floor(Math.random() * (MAP_HEIGHT));
+            while (this.passed == false) {
+                let x = Math.floor(Math.random() * MAP_WIDTH);
+                let y = Math.floor(Math.random() * MAP_HEIGHT);
                 //building zone to the ai castle
                 if (x > 60 && x < 90 && y < 90 && y > 10) {
-
                     if (x > building.castle_x + 1 && y > building.castle_y + 1 && map[x][y].type != 'hill' && map[x][y].type != 'mountain') {
                         placeBuildings('castleAI', x, y, 1, 4, 4, 'Castle1', false);
+                        this.passed = true;
                     }
-
-                    passed = true;
-
                 } else {
 
-                    passed = false;
+                    this.passed = false;
                 }
             }
 
-        } else {
             //Buildings
-
-            let rand_x = Math.floor(Math.random() * (MAP_WIDTH / 10));
-
-            if (ai_building.lumberCamp == 0) {
-                if (ai.amount_food > 10) {
-                    placeBuildings('lumberCampAI', ai_building.castle_x + rand_x, ai_building.castle_y + rand_x, 1, 2, 2, 'Lumber1', false);
-                }
-            }
-            if (ai_building.quarry == 0) {
-                if (ai.amount_food > 10 && ai.amount_wood > 10) {
-
-                    placeBuildings('quarryAI', ai_building.castle_x + rand_x, ai_building.castle_y + rand_x, 1, 2, 2, 'Quarry1', false);
-                }
-            }
-            if (ai_building.bank == 0) {
-                if (ai.amount_wood > 20 && ai.amount_stone > 20) {
-                    placeBuildings('bankAI', ai_building.castle_x + rand_x, ai_building.castle_y + rand_x, 2, 2, 2, 'Bank1', false);
-                }
-            }
-            if (ai_building.barracks == 0) {
-                if (ai.amount_food > 10 && ai.amount_stone > 15) {
-                    placeBuildings('barracksAI', ai_building.castle_x + rand_x, ai_building.castle_y + rand_x, 1, 2, 2, 'Barracks1', false);
+            if (ai_building.isPlayer == false) {
+                let rand_x = Math.floor(Math.random() * 10);
+                let rand_y = Math.floor(Math.random() * 10);
+                let x = ai_building.castle_x + rand_x;
+                let y = ai_building.castle_y + rand_y;
+                let rand = Math.floor(Math.random() * 4);
+                console.log(rand);
+                switch (rand) {
+                    case 0:
+                        if (this.lumberCamp < 3 && map[x][y].type != 'occupied') {
+                            if (ai.amount_food > 10) {
+                                placeBuildings('lumberCampAI', x, y, 1, 2, 2, 'Lumber1', false);
+                                this.lumberCamp++;
+                            }
+                        }
+                        break;
+                    case 1:
+                        if (this.quarry < 3 && map[x][y].type != 'occupied') {
+                            if (ai.amount_food > 10 && ai.amount_wood > 10) {
+                                placeBuildings('quarryAI', x, y, 1, 2, 2, 'Quarry1', false);
+                                this.quarry++;
+                            }
+                        }
+                        break;
+                    case 2:
+                        if (this.bank < 2 && map[x][y].type != 'occupied') {
+                            if (ai.amount_wood > 20 && ai.amount_stone > 20) {
+                                placeBuildings('bankAI', x, y, 2, 2, 2, 'Bank1', false);
+                                this.bank++;
+                            }
+                        }
+                        break;
+                    case 3:
+                        if (this.barracks < 3 && map[x][y].type != 'occupied') {
+                            if (ai.amount_food > 10 && ai.amount_stone > 15) {
+                                placeBuildings('barracksAI', x, y, 1, 2, 2, 'Barracks1', false);
+                                this.barracks++;
+                            }
+                        }
+                        break;
                 }
             }
         }
@@ -139,6 +158,7 @@ class Player {
     soldier_hp = 200;
     soldier_atck = 100;
     isPlayer = true;
+
 }
 
 
@@ -415,7 +435,7 @@ function placeBuildings(type, x, y, amount_per_second, width, height, sprite_id,
                 building.castle++;
                 building.generates = 'food';
                 building.hp = 10000;
-                building.isPlayer = isPlayer;
+                building.isPlayer = true;
                 building.resources_pre_second = amount_per_second;
                 building.width = width;
                 building.height = height;
@@ -458,13 +478,13 @@ function placeBuildings(type, x, y, amount_per_second, width, height, sprite_id,
                             player.amount_stone -= 15;
                             break;
                     }
-                    building.isPlayer = isPlayer;
+                    building.isPlayer = true;
                     building.resources_pre_second = amount_per_second;
                     building.width = width;
                     building.height = height;
                     building.placeOnMap();
                     map[x][y].sprite = document.getElementById(sprite_id);
-                    player.isPlayer = isPlayer;
+                    player.isPlayer = true;
                     buildings.push(building);
                     players.push(player);
                 } else {
@@ -491,7 +511,7 @@ function placeBuildings(type, x, y, amount_per_second, width, height, sprite_id,
                 ai_building.castle++;
                 ai_building.generates = 'food';
                 ai_building.hp = 10000;
-                ai_building.isPlayer = isPlayer;
+                ai_building.isPlayer = false;
                 ai_building.resources_pre_second = amount_per_second;
                 ai_building.width = width;
                 ai_building.height = height;
@@ -538,13 +558,13 @@ function placeBuildings(type, x, y, amount_per_second, width, height, sprite_id,
                 ai_building.type = type;
                 ai_building.x = x;
                 ai_building.y = y;
-                ai_building.isPlayer = isPlayer;
+                ai_building.isPlayer = false;
                 ai_building.resources_pre_second = amount_per_second;
                 ai_building.width = width;
                 ai_building.height = height;
                 ai_building.placeOnMap();
                 map[x][y].sprite = document.getElementById(sprite_id);
-                ai.isPlayer = isPlayer;
+                ai.isPlayer = true;
                 players.push(ai);
                 buildings.push(ai_building);
                 console.log(buildings);
