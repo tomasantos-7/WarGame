@@ -292,7 +292,7 @@ canvas {
     margin-left: 10px;
     background-color: #634f29;
     box-shadow: 3px 3px 3px 3px rgba(0, 0, 0, 0.7);
-    visibility: visible;
+    visibility: hidden;
 }
 
 .buildWindow .buildWindowText{
