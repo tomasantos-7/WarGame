@@ -11,6 +11,8 @@
 
 <body id="dump" onload="setup()">
     <canvas id="ui_map" width="1000" height="1000"></canvas>
+    <canvas id="ui_units" width="1000" height="1000"></canvas>
+
     <!--<canvas id="ui_units" width="1000" height="1000"></canvas>-->
 
     <div class="toolbar">
@@ -20,13 +22,13 @@
             <div id="woodstatus" class="status" title="Wood : " style="--icon:url('assets/wood.png');"> </div>
             <div id="stonestatus" class="status" title="Stone : " style="--icon:url('assets/stone.png');"> </div>
             <div id="goldstatus" class="status" title="Gold : " style="--icon:url('assets/money.png');"> </div>
-            <div id="foodAI" class="status" title="Food : " style="--icon:url('assets/food.png');"> </div>
+            <!--<div id="foodAI" class="status" title="Food : " style="--icon:url('assets/food.png');"> </div>
             <div id="woodAI" class="status" title="Wood : " style="--icon:url('assets/wood.png');"> </div>
             <div id="stoneAI" class="status" title="Stone : " style="--icon:url('assets/stone.png');"> </div>
-            <div id="goldAI" class="status" title="Gold : " style="--icon:url('assets/money.png');"> </div>
+            <div id="goldAI" class="status" title="Gold : " style="--icon:url('assets/money.png');"> </div>-->
         </div>
 
-        <button class="paper" onclick="select()">Select</button>
+        <button class="paper" onclick="selectUnit()">Select</button>
         <button class="paper" onclick="showButtons()">Menu</button>
         <div class="tooltipLumber">
             <button id="menuMembers1" class="paperMenu" onclick="placeLumbermill()">Lumbermill</button>
@@ -44,15 +46,25 @@
             <button id="menuMembers4" class="paperMenu" onclick="placeBarracks()">Barracks</button>
             <span class="tooltipBarracksText">x10 Comida x15 Pedra</span>
         </div>
-            
+
+    </div>
+
+    <div id="buildingMode" class="buildingMode">
+        <div class="overlay"></div>
+        <div class="buildingMode-content">
+            <span class="paper">Building Mode</span>
+        </div>
     </div>
 
     <div id="buildingsWindow" class="buildWindow">
-        <span class="buildWindowText">Barracks</span>
-        <button id="unitButton" class="paperButton" onclick="drawUnits()">Infantry</button>
-        <br>
-        <br>
-        <span class="buildWindowText2">x10 Comida x10 Ouro +1 Infantaria</span>    
+        <div class="overlay"></div>
+        <div class="content">
+            <span class="buildWindowText">Barracks</span>
+            <button id="unitButton" class="paperButton" onclick="drawUnits()">Infantry</button>
+            <br>
+            <br>
+            <span class="buildWindowText2">x10 Comida x10 Ouro +1 Infantaria</span>
+        </div>
     </div>
 
     <div style="display: none;">
@@ -106,7 +118,7 @@
         </div>
     </div>
 
-    
+
 
 </body>
 

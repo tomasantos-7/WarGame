@@ -136,12 +136,12 @@ canvas {
 }
 
 
-.tooltipLumber{
+.tooltipLumber {
     position: relative;
     display: inline-block;
 }
 
-.tooltipLumber .tooltipLumberText{
+.tooltipLumber .tooltipLumberText {
     visibility: hidden;
     width: 120px;
     background-color: #665537;
@@ -157,11 +157,11 @@ canvas {
     font-size: 30px;
 }
 
-.tooltipLumber:hover .tooltipLumberText{
+.tooltipLumber:hover .tooltipLumberText {
     visibility: visible;
 }
 
-.tooltipLumber .tooltipLumberText::after{
+.tooltipLumber .tooltipLumberText::after {
     content: " ";
     position: absolute;
     bottom: 100%;
@@ -172,12 +172,12 @@ canvas {
     border-color: transparent transparent #665537 transparent;
 }
 
-.tooltipQuarry{
+.tooltipQuarry {
     position: relative;
     display: inline-block;
 }
 
-.tooltipQuarry .tooltipQuarryText{
+.tooltipQuarry .tooltipQuarryText {
     visibility: hidden;
     width: 120px;
     background-color: #665537;
@@ -193,11 +193,11 @@ canvas {
     font-size: 30px;
 }
 
-.tooltipQuarry:hover .tooltipQuarryText{
+.tooltipQuarry:hover .tooltipQuarryText {
     visibility: visible;
 }
 
-.tooltipQuarry .tooltipQuarryText::after{
+.tooltipQuarry .tooltipQuarryText::after {
     content: " ";
     position: absolute;
     bottom: 100%;
@@ -210,12 +210,12 @@ canvas {
 
 
 
-.tooltipBank{
+.tooltipBank {
     position: relative;
     display: inline-block;
 }
 
-.tooltipBank .tooltipBankText{
+.tooltipBank .tooltipBankText {
     visibility: hidden;
     width: 120px;
     background-color: #665537;
@@ -231,11 +231,11 @@ canvas {
     font-size: 30px;
 }
 
-.tooltipBank:hover .tooltipBankText{
+.tooltipBank:hover .tooltipBankText {
     visibility: visible;
 }
 
-.tooltipBank .tooltipBankText::after{
+.tooltipBank .tooltipBankText::after {
     content: " ";
     position: absolute;
     bottom: 100%;
@@ -247,12 +247,12 @@ canvas {
 }
 
 
-.tooltipBarracks{
+.tooltipBarracks {
     position: relative;
     display: inline-block;
 }
 
-.tooltipBarracks .tooltipBarracksText{
+.tooltipBarracks .tooltipBarracksText {
     visibility: hidden;
     width: 120px;
     background-color: #665537;
@@ -268,11 +268,11 @@ canvas {
     font-size: 30px;
 }
 
-.tooltipBarracks:hover .tooltipBarracksText{
+.tooltipBarracks:hover .tooltipBarracksText {
     visibility: visible;
 }
 
-.tooltipBarracks .tooltipBarracksText::after{
+.tooltipBarracks .tooltipBarracksText::after {
     content: " ";
     position: absolute;
     bottom: 100%;
@@ -283,19 +283,31 @@ canvas {
     border-color: transparent transparent #665537 transparent;
 }
 
-.buildWindow{
+.buildWindow {
     position: fixed;
-    bottom: 10px;
-    left: 0px;
+    bottom: -10%;
+    left: 11%;
     width: 21%;
     height: 20%;
     margin-left: 10px;
-    background-color: #634f29;
-    box-shadow: 3px 3px 3px 3px rgba(0, 0, 0, 0.7);
-    visibility: hidden;
 }
 
-.buildWindow .buildWindowText{
+.buildWindow .overlay {
+
+    opacity: 1;
+    transition: opacity 100ms ease-in-out 200ms;
+}
+
+.buildWindow .content{
+    background-color: #634f29;
+    box-shadow: 3px 3px 3px 3px rgba(0, 0, 0, 0.7);
+    transform: translate(-50%, -50%) scale(1.15);
+    opacity: 0;
+    box-shadow: 0px 2px 2px 5px rgba(0, 0, 0, 0.05);
+    transition: all 300ms ease-in-out;
+}
+
+.buildWindow .content .buildWindowText {
     color: #fff;
     text-align: center;
     padding: 5px 0;
@@ -305,7 +317,8 @@ canvas {
     margin-left: 10px;
     font-size: 40px;
 }
-.buildWindow .buildWindowText2{
+
+.buildWindow .content .buildWindowText2 {
     color: #fff;
     text-align: center;
     padding: 5px 0;
@@ -316,7 +329,7 @@ canvas {
     font-size: 30px;
 }
 
-.buildWindow button{
+.buildWindow button {
     cursor: pointer;
 }
 
@@ -352,4 +365,67 @@ canvas {
     right: 0px;
     left: auto;
     transform: rotate(3deg);
+}
+
+.buildWindow.active {
+    bottom: -70px;
+    transition: bottom 0ms ease-in-out 0ms;
+}
+
+.buildWindow.active .overlay {
+    opacity: 1;
+    transition: all 300ms ease-in-out;
+}
+
+.buildWindow.active .content {
+    transform: translate(-50%, -50%) scale(1);
+    opacity: 1;
+}
+
+
+
+.buildingMode {
+    position: fixed;
+    text-align: center;
+    padding: 2px 20px;
+    top: 90px;
+
+}
+
+.buildingMode .overlay {
+    opacity: 1;
+    transition: opacity 100ms ease-in-out 200ms;
+}
+
+.buildingMode .buildingMode-content {
+    position: fixed;
+    text-align: center;
+    padding: 2px 20px;
+    top: 130px;
+    background-color: #E6CA8E;
+    border-color: #B5914A;
+    border-style: solid;
+    border-width: 1.5px;
+    border-radius: 10px;
+    left: 49.5%;
+    font-size: 50px;
+    transform: translate(-50%, -50%) scale(1.15);
+    opacity: 0;
+    box-shadow: 0px 2px 2px 5px rgba(0, 0, 0, 0.05);
+    transition: all 300ms ease-in-out;
+}
+
+.buildingMode.active {
+    top: 0px;
+    transition: top 0ms ease-in-out 0ms;
+}
+
+.buildingMode.active .overlay {
+    opacity: 1;
+    transition: all 300ms ease-in-out;
+}
+
+.buildingMode.active .buildingMode-content {
+    transform: translate(-50%, -50%) scale(1);
+    opacity: 1;
 }
