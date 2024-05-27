@@ -8,6 +8,8 @@ const players = [];
 const units = [];
 let target_cell = [];
 let inMovement = false;
+let delta = 0;
+
 
 
 class Engine {
@@ -57,28 +59,28 @@ class Engine {
         let rand = Math.floor(Math.random() * 4);
         switch (rand) {
             case 0:
-                if (this.lumberCamp < 3 && ai.amount_food > 10) {
+                if (this.lumberCamp < 3 && ai.amount_food >= 10) {
                     placeBuildings('lumberCampAI', x, y, 1, 2, 2, 'Lumber1', false);
                     this.lumberCamp++;
                     this.saveCells(x, y);
                 }
                 break;
             case 1:
-                if (this.quarry < 3 && ai.amount_food > 10 && ai.amount_wood > 10) {
+                if (this.quarry < 3 && ai.amount_food >= 10 && ai.amount_wood >= 10) {
                     placeBuildings('quarryAI', x, y, 1, 2, 2, 'Quarry1', false);
                     this.quarry++;
                     this.saveCells(x, y);
                 }
                 break;
             case 2:
-                if (this.bank < 2 && ai.amount_wood > 20 && ai.amount_stone > 20) {
+                if (this.bank < 2 && ai.amount_wood >= 20 && ai.amount_stone >= 20) {
                     placeBuildings('bankAI', x, y, 2, 2, 2, 'Bank1', false);
                     this.bank++;
                     this.saveCells(x, y);
                 }
                 break;
             case 3:
-                if (this.barracks < 3 && ai.amount_food > 10 && ai.amount_stone > 15) {
+                if (this.barracks < 3 && ai.amount_food >= 10 && ai.amount_stone >= 15) {
                     placeBuildings('barracksAI', x, y, 1, 2, 2, 'Barracks1', false);
                     this.barracks++;
                     this.saveCells(x, y);
@@ -135,8 +137,31 @@ class Engine {
         }
     }
 
+    createUnits() {
+        if (this.barracks > 0) {
+            if (ai.amount_food >= 10 && ai.amount_gold >= 10) {
+                ai.amount_soldier++;
+                ai.amount_food -= 10;
+                ai.amount_gold -= 10;
+                drawUnits();
+            }
+        }
+    }
 
     move() {
+        for (let i = 0; i < units.length; i++) {
+            let unit = units[i];
+            unit.move(delta);
+        }
+
+        let oUnit = new Unit();
+        let list_of_images = textureMap.get("infantries");
+        oUnit.isPlayer = false;
+        if (list_of_images) {
+            let chosen_index = Math.floor(Math.random() * list_of_images.length);
+            oUnit.sprite = list_of_images[chosen_index];
+        }
+        units.push(oUnit);
 
     }
 
@@ -162,6 +187,7 @@ class Building {
     hp = 0;
     castle_x = 0;
     castle_y = 0;
+    isDestroyed = false;
     isPlayer = true;
 
     placeOnMap() {
@@ -205,10 +231,6 @@ class Player {
     amount_stone = 0;
     amount_gold = 0;
     amount_soldier = 0;
-    soldier_x = 0;
-    soldier_y = 0;
-    soldier_hp = 200;
-    soldier_atck = 100;
     isPlayer = true;
 
 }
@@ -229,6 +251,13 @@ class Unit {
     //target cell coords
     cell_x = 0;
     cell_y = 0;
+    //status of units
+    hp = 200;
+    attack_damage = 100;
+    attack_speed = 5000; //rate of each hit, in milliseconds
+    isDestroyed = false;
+
+    isPlayer = true;
 
     move(elapsed) {
         this.currentCell_x = Math.floor(this.x / CELL_WIDTH);
@@ -259,6 +288,8 @@ class Unit {
         }
         //inMovement = false;
     }
+
+
 }
 
 let player = new Player();
@@ -291,7 +322,6 @@ function setup() {
 let previous_ts = null;
 
 function drawFrame(timestamp) {
-    let delta = 0;
     if (previous_ts) {
         delta = timestamp - previous_ts;
         let fps = 1000 / delta;
@@ -302,6 +332,7 @@ function drawFrame(timestamp) {
     for (let i = 0; i < units.length; i++) {
         let unit = units[i];
         unit.move(delta);
+        isInUnitRange(unit.cell_x, unit.cell_y);
     }
 
     if (!previous_ts) //first frame load the textures and the general scenery 
@@ -311,7 +342,6 @@ function drawFrame(timestamp) {
     }
 
     drawScenery();
-    console.log(inMovement);
     if (inMovement == true) {
         drawUnits();
     }
@@ -391,7 +421,7 @@ function initializeTerrain() {
                 map[x][y].type = 'mountain';
                 map[x + 1][y].type = 'mountain';
                 if (map[x][y].type == 'mountain') {
-                    map[x][y].cost = Infinity;
+                    map[x][y].cost = 0; //Infinity
                 }
                 let list_of_images = textureMap.get('mountain');
                 map[x][y].sprite = list_of_images[Math.floor(Math.random() * list_of_images.length)];
@@ -401,7 +431,6 @@ function initializeTerrain() {
 
     getCastle();
     //spawnUnits(building.castle_x + 5, building.castle_y + 5, 'Infantry2');
-    select();
     //Choose the sprite for the untis
     let oUnit = new Unit();
     let list_of_images = textureMap.get("infantries");
@@ -719,35 +748,6 @@ function getNeighbors(map, x, y) {
     return neighbors;
 }
 
-function moveUnits() {
-    //create a new canvas to load only the movement of units
-    const ui_units = document.getElementById("ui_units");
-    ui_units.setAttribute("width", MAP_WIDTH * CELL_WIDTH);
-    ui_units.setAttribute("height", MAP_HEIGHT * CELL_HEIGHT);
-    ui_units.addEventListener('click', function (event) {
-
-        //get the coords of the destination
-        let mouse_x = event.offsetX;
-        let mouse_y = event.offsetY;
-        //conversion of the cells to px
-        let cell_x = Math.floor(mouse_x / CELL_WIDTH);
-        let cell_y = Math.floor(mouse_y / CELL_HEIGHT);
-        for (let i = 0; i < units.length; i++) {
-            let unit = units[i];
-            //coords in grid
-            unit.cell_x = cell_x;
-            unit.cell_y = cell_y;
-            //coords in pixels
-            unit.target_x = cell_x * CELL_WIDTH;
-            unit.target_y = cell_y * CELL_HEIGHT;
-            console.log('move');
-            inMovement = true;
-        }
-    }, {
-        once: true
-    });
-}
-
 function elevateTerrain(amount, center_x, center_y, radius) {
 
     for (let x = 0; x < MAP_WIDTH; x++)
@@ -829,6 +829,35 @@ function drawGrayscale() {
         }
 }
 
+function moveUnits() {
+    //create a new canvas to load only the movement of units
+    const ui_units = document.getElementById("ui_units");
+    ui_units.setAttribute("width", MAP_WIDTH * CELL_WIDTH);
+    ui_units.setAttribute("height", MAP_HEIGHT * CELL_HEIGHT);
+    ui_units.addEventListener('click', function (event) {
+
+        //get the coords of the destination
+        let mouse_x = event.offsetX;
+        let mouse_y = event.offsetY;
+        //conversion of the cells to px
+        let cell_x = Math.floor(mouse_x / CELL_WIDTH);
+        let cell_y = Math.floor(mouse_y / CELL_HEIGHT);
+        for (let i = 0; i < units.length; i++) {
+            let unit = units[i];
+            //coords in grid
+            unit.cell_x = cell_x;
+            unit.cell_y = cell_y;
+            //coords in pixels
+            unit.target_x = cell_x * CELL_WIDTH;
+            unit.target_y = cell_y * CELL_HEIGHT;
+            console.log('move');
+            inMovement = true;
+        }
+    }, {
+        once: true
+    });
+}
+
 function drawUnits() {
 
     const canvas = document.getElementById("ui_units");
@@ -838,12 +867,63 @@ function drawUnits() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     for (let i = 0; i < units.length; i++) {
         let unit = units[i];
-        let building = buildings[i];
-        //unit gets drawn centered in cell
-        let draw_x = unit.x - unit.sprite.naturalWidth / 2 + CELL_WIDTH / 2;
-        let draw_y = unit.y - unit.sprite.naturalHeight / 2 + CELL_HEIGHT / 2;
-        ctx.drawImage(unit.sprite, unit.x, unit.y, unit.sprite.naturalWidth, unit.sprite.naturalHeight);
+        if (!unit.isDestroyed) {
+            //unit gets drawn centered in cell
+            //let draw_x = unit.x - unit.sprite.naturalWidth / 2 + CELL_WIDTH / 2;
+            //let draw_y = unit.y - unit.sprite.naturalHeight / 2 + CELL_HEIGHT / 2;
+            ctx.drawImage(unit.sprite, unit.x, unit.y, unit.sprite.naturalWidth, unit.sprite.naturalHeight);
+        }
     }
+}
+
+function isInUnitRange(target_x, target_y) {
+    for (let i = 0; i < units.length; i++) {
+        let unit = units[i];
+        for (let j = 0; j < buildings.length; j++) {
+            let building = buildings[j];
+
+            if (building.isPlayer == false) {
+                console.log(unit.currentCell_x, unit.currentCell_y);
+                console.log(building.x, building.y);
+                console.log(target_x, target_y);
+
+                if (unit.isPlayer) {
+                    if (unit.currentCell_x == target_x && unit.currentCell_y == target_y) {
+                        if (building.isPlayer == false && building.x == target_x && building.y == target_y) {
+                            console.log("attacking");
+                            setInterval(() => {
+                                if (building.hp > 0) {
+                                    building.hp -= unit.attack_damage;
+                                    buildings.push(building);
+                                } else {
+                                    remove(map[target_x][target_y].bType, target_x, target_y);
+                                }
+                            }, unit.attack_speed);
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+function remove(type, x, y) {
+    for (let i = 0; i < buildings.length; i++) {
+        let building = buildings[i];
+        if (building.x == x && building.y == y) {
+            map[x][y].sprite = null;
+            building[type]--;
+        }
+    }
+    /*
+    for (let i = 0; i < units.length; i++) {
+        let unit = units[i];
+        if (unit.currentCell_x == x && unit.currentCell_y == y) {
+            unit.sprite = null;
+            player.amount_soldier--;
+        }
+    }*/
+
 }
 
 function drawPath() {
@@ -876,7 +956,7 @@ function placeLumbermill() {
     //document.getElementById("buildingsWindow").classList.add("active");
     let canvas = document.getElementById("ui_map");
     canvas.addEventListener("click", function (e) {
-        if (player.amount_food > 10) {
+        if (player.amount_food >= 10) {
             let values = getCoordinates(canvas, e);
             let x = values[0];
             let y = values[1];
@@ -899,7 +979,7 @@ function placeQuarry() {
     document.getElementById("buildingMode").classList.add("active");
     const canvas = document.getElementById("ui_map");
     canvas.addEventListener("click", function (e) {
-        if (player.amount_food > 10 && player.amount_wood > 10) {
+        if (player.amount_food >= 10 && player.amount_wood >= 10) {
             let values = getCoordinates(canvas, e);
             let x = values[0];
             let y = values[1];
@@ -919,7 +999,7 @@ function placeBank() {
     document.getElementById("buildingMode").classList.add("active");
     const canvas = document.getElementById("ui_map");
     canvas.addEventListener("click", function (e) {
-        if (player.amount_wood > 20 && player.amount_stone > 20) {
+        if (player.amount_wood >= 20 && player.amount_stone >= 20) {
             let values = getCoordinates(canvas, e);
             let x = values[0];
             let y = values[1];
@@ -939,7 +1019,7 @@ function placeBarracks() {
     document.getElementById("buildingMode").classList.add("active");
     const canvas = document.getElementById("ui_map");
     canvas.addEventListener("click", function (e) {
-        if (player.amount_food > 10 && player.amount_stone > 15) {
+        if (player.amount_food >= 10 && player.amount_stone >= 15) {
             let values = getCoordinates(canvas, e);
             let x = values[0];
             let y = values[1];
@@ -966,23 +1046,18 @@ function getCoordinates(canvas, event) {
 
 function select() {
     const canvas = document.getElementById("ui_units")
-    canvas.addEventListener("mousedown", function (e) {
+    canvas.addEventListener("mousedown", e => {
         console.log("activated")
         let mouseCell_x = Math.floor(e.offsetX / CELL_WIDTH);
         let mouseCell_y = Math.floor(e.offsetY / CELL_HEIGHT);
 
         for (let i = 0; i < buildings.length; i++) {
             let building = buildings[i];
-            console.log(building.bType);
-            console.log(mouseCell_x, mouseCell_y);
-            console.log(building.x, building.y);
-            if (map[e.offsetX][e.offsetY].bType == 'barracks' && mouseCell_x == building.x && mouseCell_y == building.y) {//problemas com o type
+            if (building.type == 'barracks' && building.isPlayer == true && mouseCell_x == building.x && mouseCell_y == building.y) {
                 console.log("done")
                 document.getElementById("buildingsWindow").classList.add("active");
             }
         }
-    }, {
-        once: true
     });
 }
 
@@ -1009,7 +1084,7 @@ function selectUnit() {
     }, {
         once: true
     });*/
-    showUnitCanvas(true);
+    moveUnits();
 }
 
 function showUnitCanvas(showCanvas) {
@@ -1018,8 +1093,14 @@ function showUnitCanvas(showCanvas) {
     ui_units.setAttribute("height", MAP_HEIGHT * CELL_HEIGHT);
     if (showCanvas) {
         ui_units.style.display = 'block';
-        moveUnits();
+        select();
     } else {
         ui_units.style.display = 'none';
     }
+}
+
+function createUnit() {
+    player.amount_soldier++;
+    player.isPlayer = true;
+    drawUnits();
 }
