@@ -298,7 +298,7 @@ canvas {
     transition: opacity 100ms ease-in-out 200ms;
 }
 
-.buildWindow .content{
+.buildWindow .content {
     background-color: #634f29;
     box-shadow: 3px 3px 3px 3px rgba(0, 0, 0, 0.7);
     transform: translate(-50%, -50%) scale(1.15);
@@ -428,4 +428,19 @@ canvas {
 .buildingMode.active .buildingMode-content {
     transform: translate(-50%, -50%) scale(1);
     opacity: 1;
+}
+
+.healthBar-container {
+    width: 200px;
+    height: 25px;
+    background-color: #ddd;
+    border: 1px solid #000;
+    border-radius: 5px;
+}
+
+.healthBar-container .healthBar {
+    height: 100%;
+    background-color: #cc2f2f;
+    width: 100%;
+    border-radius: 5px 0 0 5px;
 }

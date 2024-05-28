@@ -15,10 +15,10 @@ let delta = 0;
 class Engine {
 
     passed = false;
-    lumberCamp = 0;
-    quarry = 0;
-    bank = 0;
-    barracks = 0;
+    lumberCampAI = 0;
+    quarryAI = 0;
+    bankAI = 0;
+    barracksAI = 0;
 
     USEDCELL = class {
         x = 0;
@@ -59,30 +59,30 @@ class Engine {
         let rand = Math.floor(Math.random() * 4);
         switch (rand) {
             case 0:
-                if (this.lumberCamp < 3 && ai.amount_food >= 10) {
+                if (this.lumberCampAI < 3 && ai.amount_food >= 10) {
                     placeBuildings('lumberCampAI', x, y, 1, 2, 2, 'Lumber1', false);
-                    this.lumberCamp++;
+                    this.lumberCampAI++;
                     this.saveCells(x, y);
                 }
                 break;
             case 1:
-                if (this.quarry < 3 && ai.amount_food >= 10 && ai.amount_wood >= 10) {
+                if (this.quarryAI < 3 && ai.amount_food >= 10 && ai.amount_wood >= 10) {
                     placeBuildings('quarryAI', x, y, 1, 2, 2, 'Quarry1', false);
-                    this.quarry++;
+                    this.quarryAI++;
                     this.saveCells(x, y);
                 }
                 break;
             case 2:
-                if (this.bank < 2 && ai.amount_wood >= 20 && ai.amount_stone >= 20) {
+                if (this.bankAI < 2 && ai.amount_wood >= 20 && ai.amount_stone >= 20) {
                     placeBuildings('bankAI', x, y, 2, 2, 2, 'Bank1', false);
-                    this.bank++;
+                    this.bankAI++;
                     this.saveCells(x, y);
                 }
                 break;
             case 3:
-                if (this.barracks < 3 && ai.amount_food >= 10 && ai.amount_stone >= 15) {
+                if (this.barracksAI < 3 && ai.amount_food >= 10 && ai.amount_stone >= 15) {
                     placeBuildings('barracksAI', x, y, 1, 2, 2, 'Barracks1', false);
-                    this.barracks++;
+                    this.barracksAI++;
                     this.saveCells(x, y);
                 }
                 break;
@@ -138,7 +138,7 @@ class Engine {
     }
 
     createUnits() {
-        if (this.barracks > 0) {
+        if (this.barracksAI > 0) {
             if (ai.amount_food >= 10 && ai.amount_gold >= 10) {
                 ai.amount_soldier++;
                 ai.amount_food -= 10;
@@ -300,6 +300,7 @@ let engine = new Engine();
 
 //cria um array de arrays, com o tamanho (MAP_WIDTH x MAP_HEIGHT) tudo inicializado a 0;
 const map = new Array(MAP_WIDTH).fill(0).map(() => new Array(MAP_HEIGHT).fill(0));
+const healthBar = document.getElementById("healthBar");
 const textureMap = new Map();
 
 function setup() {
@@ -405,9 +406,10 @@ function initializeTerrain() {
                 map[x - 1][y].type == 'hill' &&
                 map[x + 1][y].type == 'hill' &&
                 map[x][y + 1].type == 'hill' &&
-                map[x][y - 1].type == 'hill'
-            )
+                map[x][y - 1].type == 'hill') {
                 map[x][y].enclosed = true;
+            }
+
         }
     //upgrade pairs of enclosed hills into mountains
     for (let x = 1; x < MAP_WIDTH - 1; x++)
@@ -482,7 +484,7 @@ function GetResources() {
         document.getElementById("foodAI").textContent = ai.amount_food;
         document.getElementById("woodAI").textContent = ai.amount_wood;
         document.getElementById("stoneAI").textContent = ai.amount_stone;
-        document.getElementById("goldAI").textContent = ai.amount_gold;*/
+    document.getElementById("goldAI").textContent = ai.amount_gold;*/
 }
 
 function placeBuildings(type, x, y, amount_per_second, width, height, sprite_id, isPlayer) {
@@ -798,11 +800,13 @@ function drawScenery() {
             if (!sprite) {
                 continue;
             } else {
-
-                ctx.drawImage(sprite, x * (CELL_WIDTH), y * (CELL_HEIGHT), sprite.naturalWidth, sprite.naturalHeight);
+                for (let i = 0; i < buildings.length; i++) {
+                    let building = buildings[i];
+                    if (!building.isDestroyed) {
+                        ctx.drawImage(sprite, x * (CELL_WIDTH), y * (CELL_HEIGHT), sprite.naturalWidth, sprite.naturalHeight);
+                    }
+                }
             }
-
-
         }
 }
 
@@ -877,31 +881,41 @@ function drawUnits() {
 }
 
 function isInUnitRange(target_x, target_y) {
+
     for (let i = 0; i < units.length; i++) {
         let unit = units[i];
         for (let j = 0; j < buildings.length; j++) {
             let building = buildings[j];
-
-            if (building.isPlayer == false) {
-                console.log(unit.currentCell_x, unit.currentCell_y);
-                console.log(building.x, building.y);
-                console.log(target_x, target_y);
-
-                if (unit.isPlayer) {
-                    if (unit.currentCell_x == target_x && unit.currentCell_y == target_y) {
-                        if (building.isPlayer == false && building.x == target_x && building.y == target_y) {
-                            console.log("attacking");
-                            setInterval(() => {
-                                if (building.hp > 0) {
-                                    building.hp -= unit.attack_damage;
-                                    buildings.push(building);
-                                } else {
-                                    remove(map[target_x][target_y].bType, target_x, target_y);
-                                }
-                            }, unit.attack_speed);
+            //console.log(unit.currentCell_x, unit.currentCell_y);
+            //console.log(building.x, building.y);
+            //console.log(target_x, target_y);
+            if (building.isDestroyed == false) {
+                if (unit.isPlayer == true && building.isPlayer == false && building.type != "castleAI") {
+                    if (building.x == target_x &&
+                        building.y == target_y &&
+                        unit.currentCell_x == target_x &&
+                        unit.currentCell_y == target_y) {
+                        let destroyed = false;
+                        console.log(destroyed)
+                        while (destroyed == false) {
+                            if (building.hp > 0) {
+                                console.log("attacking");
+                                building.hp -= unit.attack_damage;
+                                buildings.push(building);
+                            } else {
+                                destroyed = true;
+                                building.isDestroyed = true;
+                                map[target_x][target_y].sprite = null;
+                                engine[building.type]--;
+                                buildings.push(building);
+                                //building = buildings.filter(building => !building.isDestroyed);
+                                console.log("destroyed");
+                            }
                         }
                     }
                 }
+            } else {
+                continue;
             }
         }
     }
@@ -913,7 +927,9 @@ function remove(type, x, y) {
         if (building.x == x && building.y == y) {
             map[x][y].sprite = null;
             building[type]--;
+            buildings.push(building);
         }
+
     }
     /*
     for (let i = 0; i < units.length; i++) {
@@ -1103,4 +1119,29 @@ function createUnit() {
     player.amount_soldier++;
     player.isPlayer = true;
     drawUnits();
+}
+
+function updateHealthBar(type) {
+    let max;
+    let min = 0;
+    let healthValue;
+
+    for (let i = 0; i < units.length; i++) {
+        let unit = units[i];
+        for (let j = 0; j < buildings.length; j++) {
+            if (type == 'building') {
+                let building = buildings[j];
+
+                healthValue = building.hp;
+
+            } else {
+                let unit = units[i];
+
+                healthValue = unit.hp;
+                
+            }
+
+
+        }
+    }
 }
