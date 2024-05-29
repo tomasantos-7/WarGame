@@ -143,7 +143,6 @@ class Engine {
                 ai.amount_soldier++;
                 ai.amount_food -= 10;
                 ai.amount_gold -= 10;
-                drawUnits();
             }
         }
     }
@@ -185,6 +184,7 @@ class Building {
     width = 1;
     height = 1;
     hp = 0;
+    damageQueue = 0;
     castle_x = 0;
     castle_y = 0;
     isDestroyed = false;
@@ -197,7 +197,6 @@ class Building {
                 map[x][y].type = 'occupied';
                 map[x][y].bType = this.type;
                 map[x][y].sprite = null;
-
             }
 
 
@@ -254,7 +253,6 @@ class Unit {
     //status of units
     hp = 200;
     attack_damage = 100;
-    attack_speed = 5000; //rate of each hit, in milliseconds
     isDestroyed = false;
 
     isPlayer = true;
@@ -300,7 +298,6 @@ let engine = new Engine();
 
 //cria um array de arrays, com o tamanho (MAP_WIDTH x MAP_HEIGHT) tudo inicializado a 0;
 const map = new Array(MAP_WIDTH).fill(0).map(() => new Array(MAP_HEIGHT).fill(0));
-const healthBar = document.getElementById("healthBar");
 const textureMap = new Map();
 
 function setup() {
@@ -333,7 +330,6 @@ function drawFrame(timestamp) {
     for (let i = 0; i < units.length; i++) {
         let unit = units[i];
         unit.move(delta);
-        isInUnitRange(unit.cell_x, unit.cell_y);
     }
 
     if (!previous_ts) //first frame load the textures and the general scenery 
@@ -444,9 +440,14 @@ function initializeTerrain() {
     units.push(oUnit);
 
     //função de intervalo a cada segundo gera 1 de resources
+
+
     setInterval(() => {
         GetResources();
-
+        for (let i = 0; i < units.length; i++) {
+            let unit = units[i]
+            attack(unit.cell_x, unit.cell_y);
+        }
         engine.build();
     }, 1000);
 }
@@ -856,6 +857,7 @@ function moveUnits() {
             unit.target_y = cell_y * CELL_HEIGHT;
             console.log('move');
             inMovement = true;
+
         }
     }, {
         once: true
@@ -880,45 +882,73 @@ function drawUnits() {
     }
 }
 
-function isInUnitRange(target_x, target_y) {
 
-    for (let i = 0; i < units.length; i++) {
-        let unit = units[i];
-        for (let j = 0; j < buildings.length; j++) {
-            let building = buildings[j];
-            //console.log(unit.currentCell_x, unit.currentCell_y);
-            //console.log(building.x, building.y);
-            //console.log(target_x, target_y);
-            if (building.isDestroyed == false) {
-                if (unit.isPlayer == true && building.isPlayer == false && building.type != "castleAI") {
-                    if (building.x == target_x &&
-                        building.y == target_y &&
-                        unit.currentCell_x == target_x &&
-                        unit.currentCell_y == target_y) {
-                        let destroyed = false;
-                        console.log(destroyed)
-                        while (destroyed == false) {
+const activeAttacks = new Map();
+
+function attack(target_x, target_y) {
+    let maxHP = 500;
+    let healthBar = document.getElementById("healthBar");
+    let healthBarContainer = document.getElementById("healthBar-container");
+
+    units.forEach(unit => {
+        if (unit.isPlayer) {
+            buildings.forEach(building => {
+                if (!building.isDestroyed && !building.isPlayer &&
+                    building.x === target_x && building.y === target_y &&
+                    unit.currentCell_x === target_x && unit.currentCell_y === target_y) {
+
+                    healthBarContainer.style.top = `${target_y * CELL_HEIGHT}px`;
+                    healthBarContainer.style.left = `${(target_x * CELL_WIDTH) - 5}px`;
+                    healthBar.style.visibility = 'visible';
+                    healthBarContainer.style.visibility = 'visible';
+                    // Initialize damageQueue if it doesn't exist
+                    if (!building.damageQueue) {
+                        building.damageQueue = 0;
+                    }
+
+                    // Add unit's damage to the building's damageQueue
+                    building.damageQueue += unit.attack_damage;
+
+                    // Check if the building is already under attack
+                    if (!activeAttacks.has(building)) {
+                        const attackInterval = setInterval(() => {
                             if (building.hp > 0) {
                                 console.log("attacking");
-                                building.hp -= unit.attack_damage;
-                                buildings.push(building);
-                            } else {
-                                destroyed = true;
-                                building.isDestroyed = true;
-                                map[target_x][target_y].sprite = null;
-                                engine[building.type]--;
-                                buildings.push(building);
-                                //building = buildings.filter(building => !building.isDestroyed);
-                                console.log("destroyed");
+
+                                // Apply accumulated damage
+                                let damageToApply = building.damageQueue;
+                                building.hp -= damageToApply;
+                                building.damageQueue -= damageToApply;
+
+                                let healthValue = Math.floor((building.hp * 100) / maxHP);
+                                console.log(healthValue);
+                                healthBar.style.width = healthValue + '%';
+
+                                if (building.hp <= 0) {
+                                    clearInterval(attackInterval);
+                                    activeAttacks.delete(building);
+                                    building.isDestroyed = true;
+                                    map[target_x][target_y].sprite = null;
+                                    engine[building.type]--;
+
+                                    const ui_map = document.getElementById("ui_map");
+                                    let ctx = ui_map.getContext("2d");
+                                    ctx.clearRect(target_x * CELL_WIDTH, target_y * CELL_HEIGHT, 64, 64);
+                                    drawTexture();
+                                    healthBar.style.visibility = 'hidden';
+                                    healthBarContainer.style.visibility = 'hidden';
+                                    console.log("destroyed");
+                                }
                             }
-                        }
+                        }, 2000);
+
+                        // Add the building to the map of active attacks
+                        activeAttacks.set(building, attackInterval);
                     }
                 }
-            } else {
-                continue;
-            }
+            });
         }
-    }
+    });
 }
 
 function remove(type, x, y) {
@@ -1119,29 +1149,4 @@ function createUnit() {
     player.amount_soldier++;
     player.isPlayer = true;
     drawUnits();
-}
-
-function updateHealthBar(type) {
-    let max;
-    let min = 0;
-    let healthValue;
-
-    for (let i = 0; i < units.length; i++) {
-        let unit = units[i];
-        for (let j = 0; j < buildings.length; j++) {
-            if (type == 'building') {
-                let building = buildings[j];
-
-                healthValue = building.hp;
-
-            } else {
-                let unit = units[i];
-
-                healthValue = unit.hp;
-                
-            }
-
-
-        }
-    }
 }

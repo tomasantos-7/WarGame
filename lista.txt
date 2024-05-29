@@ -45,3 +45,21 @@ Todos os problemas anteriores foram resolvidos até à data.
 Resolver: Problemas com os recursos da AI está a acontecer o mesmo que acontecia com os recursos do player.
 
 
+29/05/2024
+
+Sumário de bugs
+
+-As florestas e as rochas localizadas nas células das construções não estão a ser removidas (rever a função de atribuição do tipo occupied e rever função de construção da AI);
+-Pathfinding: as unidades não estão a encontrar o caminho mais curto (passam por cima das montanhas) e o algoritmo só é executado no primeiro movimento da unidade;
+-Ataque das unidades: 
+    -O valor de hp das construções não estão a ser corretamente atribuidos na função de ataque (o primeiro valor de hp utilizado, independentemente da construção, é o valor do castelo);
+    -As unidades não conseguem atacar o castelo da AI;
+
+-Engine:
+    -Ajustes necessários para os tempos de construção, de forma a equilibrar o jogo;
+    -Ajustes nas condições de construção;
+
+-Selecionar unidades, sem recurso a botão (prioridade minima);
+-Ajustes necessários na zona de construção; 
+
+

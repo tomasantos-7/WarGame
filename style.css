@@ -431,11 +431,13 @@ canvas {
 }
 
 .healthBar-container {
-    width: 200px;
-    height: 25px;
+    position: relative;
+    width: 70px;
+    height: 5px;
     background-color: #ddd;
     border: 1px solid #000;
-    border-radius: 5px;
+    border-radius: 0px;
+    visibility: hidden;
 }
 
 .healthBar-container .healthBar {
@@ -443,4 +445,5 @@ canvas {
     background-color: #cc2f2f;
     width: 100%;
     border-radius: 5px 0 0 5px;
+    visibility: hidden;
 }
