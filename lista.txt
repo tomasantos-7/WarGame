@@ -62,4 +62,4 @@ Sumário de bugs
 -Selecionar unidades, sem recurso a botão (prioridade minima);
 -Ajustes necessários na zona de construção; 
 
-
+teste
