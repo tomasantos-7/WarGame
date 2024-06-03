@@ -157,16 +157,16 @@ class Engine {
             let unit = units[i];
             unit.move(delta);
         }
-
-        let oUnit = new Unit();
-        let list_of_images = textureMap.get("infantries");
-        oUnit.isPlayer = false;
-        if (list_of_images) {
-            let chosen_index = Math.floor(Math.random() * list_of_images.length);
-            oUnit.sprite = list_of_images[chosen_index];
-        }
-        units.push(oUnit);
-
+        /*
+                let oUnit = new Unit();
+                let list_of_images = textureMap.get("infantries");
+                oUnit.isPlayer = false;
+                if (list_of_images) {
+                    let chosen_index = Math.floor(Math.random() * list_of_images.length);
+                    oUnit.sprite = list_of_images[chosen_index];
+                }
+                units.push(oUnit);
+        */
     }
 
     attack() {
@@ -262,8 +262,8 @@ class Unit {
     isPlayer = true;
 
     move(elapsed) {
-        this.currentCell_x = Math.floor(this.x / CELL_WIDTH);
-        this.currentCell_y = Math.floor(this.y / CELL_HEIGHT);
+        //this.currentCell_x = Math.floor(this.x / CELL_WIDTH);
+        //this.currentCell_y = Math.floor(this.y / CELL_HEIGHT);
 
         //calculate the amount of pixels to travel using the target position and the units current position do create the distance beteween them
         let delta_x = this.target_x - this.x;
@@ -434,6 +434,7 @@ function initializeTerrain() {
     getCastle();
     //spawnUnits(building.castle_x + 5, building.castle_y + 5, 'Infantry2');
     //Choose the sprite for the untis
+    /*
     let oUnit = new Unit();
     let list_of_images = textureMap.get("infantries");
     let chosen_sprite = null;
@@ -441,7 +442,7 @@ function initializeTerrain() {
         let chosen_index = Math.floor(Math.random() * list_of_images.length);
         oUnit.sprite = list_of_images[chosen_index];
     }
-    units.push(oUnit);
+    units.push(oUnit);*/
 
     //função de intervalo a cada segundo gera 1 de resources
 
@@ -635,21 +636,6 @@ function placeBuildings(type, x, y, amount_per_second, width, height, sprite_id,
             }
         } else {
             return;
-        }
-    }
-}
-
-function spawnUnits(x, y, sprite_id) {
-    if (player.amount_soldier > 0) {
-        if (map[x][y].type == 'plain') {
-            map[x][y].sprite = document.getElementById(sprite_id);
-            player.soldier_x = x;
-            player.soldier_y = y;
-            for (let x = player.soldier_x; x < player.soldier_x + 2; x++)
-                for (let y = player.soldier_y; y < player.soldier_y + 2; y++) {
-                    map[x][y].type = 'unit';
-                }
-            players.push(player);
         }
     }
 }
@@ -900,9 +886,9 @@ function attack(target_x, target_y) {
     let healthBar = document.getElementById("healthBar");
     let healthBarContainer = document.getElementById("healthBar-container");
 
-    units.forEach(unit => {
+    for (const unit of units) {
         if (unit.isPlayer) {
-            buildings.forEach(building => {
+            for (const building of buildings) {
                 if (!building.isDestroyed && !building.isPlayer &&
                     building.x === target_x && building.y === target_y &&
                     unit.currentCell_x === target_x && unit.currentCell_y === target_y && building.type != '') {
@@ -919,7 +905,7 @@ function attack(target_x, target_y) {
                                 console.log("attacking");
 
                                 building.hp -= unit.attack_damage;
-                                
+
                                 let healthValue = Math.floor((building.hp * 100) / maxHP);
                                 console.log(healthValue);
                                 healthBar.style.width = healthValue + '%';
@@ -948,9 +934,9 @@ function attack(target_x, target_y) {
                         activeAttacks.set(building, attackInterval);
                     }
                 }
-            });
+            }
         }
-    });
+    }
 }
 
 function drawPath() {
@@ -1075,17 +1061,20 @@ function getCoordinates(canvas, event) {
     return [x, y];
 }
 
+let mouseCell_x;
+let mouseCell_y;
+
 function select() {
-    const canvas = document.getElementById("ui_units")
+    const canvas = document.getElementById("ui_units");
     canvas.addEventListener("mousedown", e => {
-        console.log("activated")
-        let mouseCell_x = Math.floor(e.offsetX / CELL_WIDTH);
-        let mouseCell_y = Math.floor(e.offsetY / CELL_HEIGHT);
+        console.log("activated");
+        mouseCell_x = Math.floor(e.offsetX / CELL_WIDTH);
+        mouseCell_y = Math.floor(e.offsetY / CELL_HEIGHT);
 
         for (let i = 0; i < buildings.length; i++) {
             let building = buildings[i];
             if (building.type == 'barracks' && building.isPlayer == true && mouseCell_x == building.x && mouseCell_y == building.y) {
-                console.log("done")
+                console.log("done");
                 document.getElementById("buildingsWindow").classList.add("active");
             }
         }
@@ -1093,29 +1082,25 @@ function select() {
 }
 
 function selectUnit() {
-    /*
-    const canvas = document.getElementById("ui_units");
-    ui_units.setAttribute("width", MAP_WIDTH * CELL_WIDTH);
-    ui_units.setAttribute("height", MAP_HEIGHT * CELL_HEIGHT);
-    console.log('listener added')
-    canvas.addEventListener('click', function (event) {
-        let x = Math.floor(event.offsetX / CELL_WIDTH);
-        let y = Math.floor(event.offsetY / CELL_HEIGHT);
-        console.log(x, y);
-        for (let i = 0; i < units.length; i++) {
-            let unit = units[i];
-            console.log('unit.currentCell_x: ' + unit.currentCell_x);
-            console.log('unit.currentCell_y: ' + unit.currentCell_y);
-            if (x === unit.currentCell_x && y === unit.currentCell_y) {
-                console.log('unit selected');
-                moveUnits();
+    if (player.amount_soldier > 0) {
+        document.getElementById("ui_units").addEventListener('click', function (event) {
+            let x = Math.floor(event.offsetX / CELL_WIDTH);
+            let y = Math.floor(event.offsetY / CELL_HEIGHT);
+            for (const unit of units) {
+                console.log(unit);
+                if (unit.isPlayer) {
+                    console.log(x, y);
+                    console.log(unit.currentCell_x, unit.currentCell_y);
+                    if (x == unit.currentCell_x && y == unit.currentCell_y) {
+                        console.log('unit selected');
+                        moveUnits();
+                    }
+                }
             }
-        }
-
-    }, {
-        once: true
-    });*/
-    moveUnits();
+        }, {
+            once: true
+        });
+    }
 }
 
 function showUnitCanvas(showCanvas) {
@@ -1131,7 +1116,30 @@ function showUnitCanvas(showCanvas) {
 }
 
 function createUnit() {
-    player.amount_soldier++;
-    player.isPlayer = true;
-    drawUnits();
+    console.log(mouseCell_x, mouseCell_y);
+    if (player.amount_food >= 10 && player.amount_gold >= 10) {
+        player.amount_soldier++;
+        player.isPlayer = true;
+        
+        let unit = new Unit();
+        
+        let list_of_images = textureMap.get("infantries");
+        if (list_of_images) {
+            let chosen_index = Math.floor(Math.random() * list_of_images.length);
+            unit.sprite = list_of_images[chosen_index];
+        }
+        
+        unit.type = "infantry";
+        unit.x = mouseCell_x * CELL_WIDTH;
+        unit.y = mouseCell_y * CELL_HEIGHT;
+        unit.currentCell_x = mouseCell_x;
+        unit.currentCell_y = mouseCell_y;
+        player.amount_food -= 10;
+        player.amount_gold -= 10;
+        units.push(unit);
+        players.push(player);
+        drawUnits();
+    } else {
+        alert('É necessário 10 de Comida e 10 de Ouro');
+    }
 }
