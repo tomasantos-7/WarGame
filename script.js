@@ -143,11 +143,38 @@ class Engine {
     }
 
     createUnits() {
+        console.log('creating unit');
         if (this.barracksAI > 0) {
             if (ai.amount_food >= 10 && ai.amount_gold >= 10) {
-                ai.amount_soldier++;
+                let unit = new Unit();
+                console.log('almost');
+                unit.type = "infantry";
+
+                let x = Math.floor(Math.random() * MAP_WIDTH);
+                let y = Math.floor(Math.random() * MAP_HEIGHT);
+                let pass = false; 
+                while (!pass) {
+                    if (x > 60 && x < 70 && y < 80 && y > 60) {
+                        unit.x = x * CELL_WIDTH;
+                        unit.y = y * CELL_HEIGHT;
+                        unit.currentCell_x = x;
+                        unit.currentCell_y = y;    
+                        pass = true;
+                    }    
+                }
+                console.log('created');
+                unit.isPlayer = false;
                 ai.amount_food -= 10;
                 ai.amount_gold -= 10;
+                ai.amount_soldier++;
+                ai.isPlayer = false;
+
+                let list_of_images = textureMap.get("infantries");
+                if (list_of_images) {
+                    let chosen_index = Math.floor(Math.random() * list_of_images.length);
+                    unit.sprite = list_of_images[chosen_index];
+                }
+                drawUnits();
             }
         }
     }
@@ -246,8 +273,8 @@ class Unit {
     x = 0;
     y = 0;
     //current cell 
-    currentCell_x = building.castle_x;
-    currentCell_y = building.castle_y;
+    currentCell_x = Math.floor(this.x / CELL_WIDTH);
+    currentCell_y = Math.floor(this.y / CELL_HEIGHT);
     //target position in pixels
     target_x = 0;
     target_y = 0;
@@ -262,8 +289,7 @@ class Unit {
     isPlayer = true;
 
     move(elapsed) {
-        //this.currentCell_x = Math.floor(this.x / CELL_WIDTH);
-        //this.currentCell_y = Math.floor(this.y / CELL_HEIGHT);
+
 
         //calculate the amount of pixels to travel using the target position and the units current position do create the distance beteween them
         let delta_x = this.target_x - this.x;
@@ -286,11 +312,20 @@ class Unit {
             let path_y = path[i].y / CELL_WIDTH;
             this.x += (path_x * normalized_x) / cost;
             this.y += (path_y * normalized_y) / cost;
-
         }
         //inMovement = false;
     }
 
+    updateCell(x, y) {
+        this.currentCell_x = x;
+        this.currentCell_y = y;
+        //coords in grid
+        this.cell_x = x;
+        this.cell_y = y;
+        //coords in pixels
+        this.target_x = x * CELL_WIDTH;
+        this.target_y = y * CELL_HEIGHT;
+    }
 
 }
 
@@ -454,6 +489,7 @@ function initializeTerrain() {
             attack(unit.cell_x, unit.cell_y);
         }
         engine.build();
+        engine.createUnits();
     }, 1000);
 }
 
@@ -853,7 +889,7 @@ function moveUnits() {
             unit.target_y = cell_y * CELL_HEIGHT;
             console.log('move');
             inMovement = true;
-
+            unit.updateCell(cell_x, cell_y);
         }
     }, {
         once: true
@@ -1067,14 +1103,12 @@ let mouseCell_y;
 function select() {
     const canvas = document.getElementById("ui_units");
     canvas.addEventListener("mousedown", e => {
-        console.log("activated");
         mouseCell_x = Math.floor(e.offsetX / CELL_WIDTH);
         mouseCell_y = Math.floor(e.offsetY / CELL_HEIGHT);
 
         for (let i = 0; i < buildings.length; i++) {
             let building = buildings[i];
             if (building.type == 'barracks' && building.isPlayer == true && mouseCell_x == building.x && mouseCell_y == building.y) {
-                console.log("done");
                 document.getElementById("buildingsWindow").classList.add("active");
             }
         }
@@ -1084,14 +1118,17 @@ function select() {
 function selectUnit() {
     if (player.amount_soldier > 0) {
         document.getElementById("ui_units").addEventListener('click', function (event) {
+            document.getElementById("buildingsWindow").classList.remove("active");
             let x = Math.floor(event.offsetX / CELL_WIDTH);
             let y = Math.floor(event.offsetY / CELL_HEIGHT);
-            for (const unit of units) {
-                console.log(unit);
+            for (let unit of units) {
                 if (unit.isPlayer) {
                     console.log(x, y);
                     console.log(unit.currentCell_x, unit.currentCell_y);
-                    if (x == unit.currentCell_x && y == unit.currentCell_y) {
+                    if (x == unit.currentCell_x && y == unit.currentCell_y ||
+                        x == unit.currentCell_x + 1 && y == unit.currentCell_y ||
+                        x == unit.currentCell_x && y == unit.currentCell_y + 1 ||
+                        x == unit.currentCell_x + 1 && y == unit.currentCell_y + 1) {
                         console.log('unit selected');
                         moveUnits();
                     }
@@ -1116,26 +1153,29 @@ function showUnitCanvas(showCanvas) {
 }
 
 function createUnit() {
+    document.getElementById("buildingsWindow").classList.remove("active");
     console.log(mouseCell_x, mouseCell_y);
     if (player.amount_food >= 10 && player.amount_gold >= 10) {
-        player.amount_soldier++;
-        player.isPlayer = true;
-        
         let unit = new Unit();
-        
-        let list_of_images = textureMap.get("infantries");
-        if (list_of_images) {
-            let chosen_index = Math.floor(Math.random() * list_of_images.length);
-            unit.sprite = list_of_images[chosen_index];
-        }
-        
+
         unit.type = "infantry";
         unit.x = mouseCell_x * CELL_WIDTH;
         unit.y = mouseCell_y * CELL_HEIGHT;
         unit.currentCell_x = mouseCell_x;
         unit.currentCell_y = mouseCell_y;
+        unit.isPlayer = true;
         player.amount_food -= 10;
         player.amount_gold -= 10;
+        player.amount_soldier++;
+        player.isPlayer = true;
+
+        let list_of_images = textureMap.get("infantries");
+        if (list_of_images) {
+            let chosen_index = Math.floor(Math.random() * list_of_images.length);
+            unit.sprite = list_of_images[chosen_index];
+        }
+
+
         units.push(unit);
         players.push(player);
         drawUnits();
