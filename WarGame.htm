@@ -12,8 +12,11 @@
 <body id="dump" onload="setup()">
     <canvas id="ui_map" width="1000" height="1000"></canvas>
     <canvas id="ui_units" width="1000" height="1000"></canvas>
-
-    <!--<canvas id="ui_units" width="1000" height="1000"></canvas>-->
+    
+    <div id="highlightSection">
+        <div id="highlight" class="highlight"></div>
+        <div id="highlightBlocked" class="highlightBlocked"></div>
+    </div>
 
     <div class="toolbar">
 
@@ -119,6 +122,9 @@
         </div>
         <div id="infantries">
             <img id="Infantry1" src="assets/Infantry1.png">
+        </div>
+        <div id="enemyArmy">
+            <img id="eInfantry1" src="assets/Infantry2.png">
         </div>
     </div>
 
