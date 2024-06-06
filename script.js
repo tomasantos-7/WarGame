@@ -227,7 +227,6 @@ class Building {
                 map[x][y].sprite = null;
             }
 
-
         if (this.type == 'castle') {
             this.castle_x = this.x;
             this.castle_y = this.y;
@@ -236,8 +235,6 @@ class Building {
             ai_building.castle_x = this.x;
             ai_building.castle_y = this.y;
         }
-
-        //map[this.x][this.y].type = this.type;
     }
 
     isInsideBuildZone(x, y) {
@@ -298,7 +295,9 @@ class Unit {
         //calculate the amount of PX we will travel in X milliseconds, we will travel at 32px per second
         let amount_traveled = (elapsed * this.speed) / 1000;
         //get the cost for travelling in the current terrain | plains = faster, hills = slower 
-        let cost = map[Math.floor(this.x / CELL_WIDTH)][Math.floor(this.y / CELL_HEIGHT)].cost;
+        let x = Math.floor(this.x / CELL_WIDTH);
+        let y = Math.floor(this.y / CELL_HEIGHT);
+        let cost = map[x][y].cost;
         //calculate the amount of px we will travel with terrain penalties
         let path = pathfinding(map, this.currentCell_x, this.currentCell_y, this.cell_x, this.cell_y);
 
@@ -382,14 +381,12 @@ function drawFrame(timestamp) {
         drawUnits();
     }
 
-    //drawUnits(); // Causa problemas com a drawScenery, não permite o desenho de construções
     requestAnimationFrame(drawFrame);
 
     previous_ts = timestamp;
 }
 // terrain generation functions
 function initializeTerrain() {
-
     let type;
     //imaginando que o terreno está tudo a nivel da agua, a cada iteração vamos elevar uma pequena ilha de forma redonda, num local aleatório 
     for (let i = 0; i < 100; i++) {
@@ -476,7 +473,7 @@ function initializeTerrain() {
             attack(unit.cell_x, unit.cell_y);
         }
         engine.build();
-        engine.createUnits();
+        //engine.createUnits();
     }, 1000);
 }
 
@@ -519,12 +516,13 @@ function GetResources() {
 
 function placeBuildings(type, x, y, amount_per_second, width, height, sprite_id, isPlayer) {
     if (isPlayer) {
-        building.type = type;
-        building.x = x;
-        building.y = y;
+
         let usedcell = new UsedCells_Highlight();
         if (map[x][y].type != 'occupied' || map[x][y].type != 'hill') {
             if (type == 'castle') {
+                building.type = type;
+                building.x = x;
+                building.y = y;
                 building.castle++;
                 building.generates = 'food';
                 building.hp = 10000;
@@ -577,6 +575,10 @@ function placeBuildings(type, x, y, amount_per_second, width, height, sprite_id,
                     building.resources_pre_second = amount_per_second;
                     building.width = width;
                     building.height = height;
+                    building.type = type;
+                    building.x = x;
+                    building.y = y;
+                    console.log(building);
                     building.placeOnMap();
                     usedcell.x = x;
                     usedcell.y = y;
@@ -601,13 +603,13 @@ function placeBuildings(type, x, y, amount_per_second, width, height, sprite_id,
         }
 
     } else {
-        ai_building.type = type;
-        ai_building.x = x;
-        ai_building.y = y;
 
         if (map[x][y].type != 'occupied' || map[x][y].type != 'hill') {
             if (ai_building.castle == 0 && type == 'castleAI') {
 
+                ai_building.type = type;
+                ai_building.x = x;
+                ai_building.y = y;
                 ai_building.castle++;
                 ai_building.generates = 'food';
                 ai_building.hp = 10000;
@@ -653,6 +655,9 @@ function placeBuildings(type, x, y, amount_per_second, width, height, sprite_id,
                         break;
                 }
 
+                ai_building.type = type;
+                ai_building.x = x;
+                ai_building.y = y;
                 ai_building.isPlayer = false;
                 ai_building.resources_pre_second = amount_per_second;
                 ai_building.width = width;
@@ -717,7 +722,7 @@ function pathfinding(map, x, y, x_end, y_end) {
         let minDistance = Infinity;
         for (let i = 0; i < MAP_WIDTH; i++) {
             for (let j = 0; j < MAP_HEIGHT; j++) {
-                if (!visited[i][j] && distances[i][j] < minDistance) {
+                if (!visited[i][j] && minDistance > 0 && distances[i][j] < minDistance) {
                     minDistance = distances[i][j];
                     currentNode = {
                         'x': i,
@@ -850,28 +855,31 @@ function drawGrayscale() {
             ctx.fillRect(x * CELL_WIDTH, y * CELL_HEIGHT, CELL_WIDTH, CELL_HEIGHT);
         }
 }
-//rever esta função (div) ou (canvas) para o highlight
+//draw of the building mode that shows where the player is allowed to build
 function drawBuildingMode(bool) {
-    const ui_highlight = document.getElementById("highlight");
-    const ui_highlightBlocked = document.getElementById("highlightBlocked");
+    const ui_highlight = document.getElementById("ui_highlight");
+    const ctx = ui_highlight.getContext("2d");
     if (bool) {
-        ui_highlight.style.left = 0 + 'px';
-        ui_highlight.style.top = 0 + 'px';
-        ui_highlight.style.width = (21 * CELL_WIDTH) + 'px';
-        ui_highlight.style.height = (16 * CELL_HEIGHT) + 'px';
-        ui_highlight.style.visibility = 'visible';
-        for (let i = 0; i < usedcells.length; i++) {
-            let usedcell = usedcells[i];
-            ui_highlightBlocked.style.left = 0 + 'px';
-            ui_highlightBlocked.style.top = 0 + 'px';
-            ui_highlightBlocked.style.width = usedcell.x;
-            ui_highlightBlocked.style.height = usedcell.y;
-            ui_highlightBlocked.style.visibility = ' visible';    
-        }
-        
+        for (let x = 0; x <= 20; x++)
+            for (let y = 0; y <= 15; y++) {
+                map[x][y].isInsideBuildZone = true;
+
+                if (map[x][y].isInsideBuildZone) {
+                    ctx.fillStyle = `rgba(0, 255, 0, 0.4)`;
+                }
+
+                if (map[x][y].type == 'occupied') {
+                    ctx.fillStyle = `rgba(255, 100, 0, 0.5)`;
+                }
+
+                ctx.fillRect(x * CELL_WIDTH, y * CELL_HEIGHT, CELL_WIDTH, CELL_HEIGHT);
+
+            }
+        ui_highlight.style.display = "block";
+
     } else {
-        ui_highlight.style.visibility = 'hidden';
-        ui_highlightBlocked.style.visibility = 'visible';
+        ctx.clearRect(0, 0, 21 * CELL_WIDTH, 16 * CELL_HEIGHT);
+        ui_highlight.style.display = "none"
     }
 
 }
@@ -944,7 +952,7 @@ function attack(target_x, target_y) {
                 if (!building.isDestroyed && !building.isPlayer &&
                     building.x === target_x && building.y === target_y &&
                     unit.currentCell_x === target_x && unit.currentCell_y === target_y && building.type != '') {
-
+                    console.log(building);
                     healthBarContainer.style.top = `${target_y * CELL_HEIGHT}px`;
                     healthBarContainer.style.left = `${(target_x * CELL_WIDTH) - 5}px`;
                     healthBar.style.visibility = 'visible';
@@ -957,7 +965,11 @@ function attack(target_x, target_y) {
                                 console.log("attacking");
 
                                 building.hp -= unit.attack_damage;
-
+                                if (building.type == 'castleAI') {
+                                    maxHP = 10000;
+                                } else {
+                                    maxHP = 500;
+                                }
                                 let healthValue = Math.floor((building.hp * 100) / maxHP);
                                 console.log(healthValue);
                                 healthBar.style.width = healthValue + '%';
@@ -978,6 +990,12 @@ function attack(target_x, target_y) {
                                     healthBar.style.visibility = 'hidden';
                                     healthBarContainer.style.visibility = 'hidden';
                                     console.log("destroyed");
+                                    if (building.type == 'castleAI') {
+                                        console.log('You Won');
+                                        document.getElementById("winLose").classList.add("active");
+                                        document.body.style.overflow = "hidden";
+                                        document.getElementById("win-Text").style.visibility = "visible";
+                                    }
                                 }
                             }
                         }, 2000);
@@ -1025,10 +1043,13 @@ function placeLumbermill() {
             let values = getCoordinates(canvas, e);
             let x = values[0];
             let y = values[1];
-
-            placeBuildings('lumberCamp', x, y, 1, 2, 2, 'Lumber1', true);
-            showUnitCanvas(true);
-            drawBuildings(x, y);
+            if (map[x][y].type != 'occupied') {
+                placeBuildings('lumberCamp', x, y, 1, 2, 2, 'Lumber1', true);
+                showUnitCanvas(true);
+                drawBuildings(x, y);
+            } else {
+                alert("Não podes construir aqui, zona ocupada por um edifício")
+            }
 
         } else {
             alert("É necessário 10 de Comida");
@@ -1050,9 +1071,13 @@ function placeQuarry() {
             let values = getCoordinates(canvas, e);
             let x = values[0];
             let y = values[1];
-            placeBuildings('quarry', x, y, 1, 2, 2, 'Quarry1', true);
-            showUnitCanvas(true);
-            drawBuildings(x, y);
+            if (map[x][y].type != 'occupied') {
+                placeBuildings('quarry', x, y, 1, 2, 2, 'Quarry1', true);
+                showUnitCanvas(true);
+                drawBuildings(x, y);
+            } else {
+                alert("Não podes construir aqui, zona ocupada por um edifício")
+            }
         } else {
             alert("São necessários 10 de Comida e 10 de Madeira");
         }
@@ -1073,9 +1098,13 @@ function placeBank() {
             let values = getCoordinates(canvas, e);
             let x = values[0];
             let y = values[1];
-            placeBuildings('bank', x, y, 1, 2, 2, 'Bank1', true);
-            showUnitCanvas(true);
-            drawBuildings(x, y);
+            if (map[x][y].type != 'occupied') {
+                placeBuildings('bank', x, y, 1, 2, 2, 'Bank1', true);
+                showUnitCanvas(true);
+                drawBuildings(x, y);
+            } else {
+                alert("Não podes construir aqui, zona ocupada por um edifício")
+            }
         } else {
             alert("São necessários 20 de Madeira e 20 de Pedra");
         }
@@ -1096,9 +1125,13 @@ function placeBarracks() {
             let values = getCoordinates(canvas, e);
             let x = values[0];
             let y = values[1];
-            placeBuildings('barracks', x, y, 1, 2, 2, 'Barracks1', true);
-            showUnitCanvas(true);
-            drawBuildings(x, y);
+            if (map[x][y].type != 'occupied') {
+                placeBuildings('barracks', x, y, 1, 2, 2, 'Barracks1', true);
+                showUnitCanvas(true);
+                drawBuildings(x, y);
+            } else {
+                alert("Não podes construir aqui, zona ocupada por um edifício")
+            }
         } else {
             alert("São necessários 10 de Comida e 15 de Pedra")
         }

@@ -10,14 +10,10 @@
 </head>
 
 <body id="dump" onload="setup()">
-    <canvas id="ui_map" width="1000" height="1000"></canvas>
-    <canvas id="ui_units" width="1000" height="1000"></canvas>
+    <canvas id="ui_map" class="canvasS" width="1000" height="1000"></canvas>
+    <canvas id="ui_units" class="canvasS" width="1000" height="1000"></canvas>
+    <canvas id="ui_highlight" class="ui_highlight" width="1000" height="1000"></canvas>
     
-    <div id="highlightSection">
-        <div id="highlight" class="highlight"></div>
-        <div id="highlightBlocked" class="highlightBlocked"></div>
-    </div>
-
     <div class="toolbar">
 
         <div class="paper statusbar">
@@ -73,6 +69,19 @@
     <div id="healthBar-container" class="healthBar-container">
         <div id="healthBar" class="healthBar"></div>
     </div>
+
+    <div id="winLose" class="winLose">
+        <div class="overlay"></div>
+        <div id="winLose-container" class="winLose-container">
+            <div id="winLoseWindow" class="winWindow">
+                <span id="win-Text" class="win-Text">You Won!</span>
+                <span id="lose-Text" class="lose-Text">You Lost!</span>
+                <button id="playAgainBtn" class="button">Play Again</button>
+                <button id="exit" class="button">Exit</button>
+            </div>
+        </div>
+    </div>
+    
 
     <div style="display: none;">
         <img id="texture" src="assets/scroll.png">

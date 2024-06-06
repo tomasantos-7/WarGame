@@ -57,7 +57,3 @@ Sumário de bugs
 
 -Engine:
     -Ajustes necessários para os tempos de construção, de forma a equilibrar o jogo;
-    -Ajustes nas condições de construção;
-
--Selecionar unidades, sem recurso a botão (prioridade minima);
--Ajustes necessários na zona de construção; 
