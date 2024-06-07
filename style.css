@@ -451,14 +451,14 @@ body {
     height: 100%;
     background-color: #cc2f2f;
     width: 100%;
-    border-radius: 5px 0 0 5px;
     visibility: hidden;
 }
 
 .winLose{
     position: fixed;
     text-align: center;
-    padding: 2px 20px;;
+    padding: 2px 20px;
+    pointer-events: none;
 }
 
 .winLose .overlay{
@@ -514,6 +514,7 @@ body {
 
 .winLose button {
     cursor: pointer;
+    visibility: hidden;
 }
 
 .winLose .button {
