@@ -179,9 +179,6 @@ class Engine {
                 }
             }
         }
-
-
-
     }
 
     attack() {

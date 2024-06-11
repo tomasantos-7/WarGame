@@ -45,7 +45,6 @@ function setup() {
     textureMap.set('rock', document.getElementById('rocks').children);
     textureMap.set('mountain', document.getElementById('mountains').children);
     textureMap.set('castle', document.getElementById('castles').children);
-    textureMap.set('infantries', document.getElementById('infantries').children);
     initializeTerrain();
     requestAnimationFrame(drawFrame);
 }
@@ -170,7 +169,10 @@ function initializeTerrain() {
         engine.build();
         if (ai.amount_soldier < 4) {
             engine.createUnits();
-            engine.move();
+        }
+        engine.move();
+        if (player.amount_soldier > 1) {
+            mergeUnits();
         }
     }, 1000);
 }
@@ -591,7 +593,7 @@ function drawBuildings(x, y) {
     ctx.drawImage(sprite, x * (CELL_WIDTH), y * (CELL_HEIGHT), sprite.naturalWidth, sprite.naturalHeight);
 }
 
-function moveUnits() {
+function moveUnits(x, y) {
     //create a new canvas to load only the movement of units
     const ui_units = document.getElementById("ui_units");
     ui_units.setAttribute("width", MAP_WIDTH * CELL_WIDTH);
@@ -606,7 +608,7 @@ function moveUnits() {
         for (let i = 0; i < units.length; i++) {
             let unit = units[i];
             //this condition makes sure that the only units that moves with this function is the player´s unit and the AI´s dont
-            if (unit.isPlayer) {
+            if (unit.isPlayer && unit.currentCell_x == x && unit.currentCell_y == y) {
                 //coords in grid
                 unit.cell_x = cell_x;
                 unit.cell_y = cell_y;
@@ -708,7 +710,7 @@ function attack(target_x, target_y) {
                         }, 2000);
 
                         // Add the building to the map of active attacks
-                        
+
                         activeAttacks.set(building, attackInterval);
                     }
                 }
@@ -918,7 +920,7 @@ function selectUnit() {
                         x == unit.currentCell_x && y == unit.currentCell_y + 1 ||
                         x == unit.currentCell_x + 1 && y == unit.currentCell_y + 1) {
                         console.log('unit selected');
-                        moveUnits();
+                        moveUnits(x, y);
                     }
                 }
             }
@@ -955,13 +957,7 @@ function createUnit() {
         player.amount_gold -= 10;
         player.amount_soldier++;
         player.isPlayer = true;
-
-        let list_of_images = textureMap.get("infantries");
-        if (list_of_images) {
-            let chosen_index = Math.floor(Math.random() * list_of_images.length);
-            unit.sprite = list_of_images[chosen_index];
-        }
-
+        unit.sprite = document.getElementById('Infantry1');
 
         units.push(unit);
         players.push(player);
@@ -969,4 +965,63 @@ function createUnit() {
     } else {
         alert('É necessário 10 de Comida e 10 de Ouro');
     }
+}
+
+//this function uses the isSameCell to verify if there is more than one unit in a cell and then merges it turning into an army
+function mergeUnits() {
+    let isSameCellBool_x;
+    let isSameCellBool_y;
+
+    let filteredUnits = units.filter(unit => unit.isPlayer === true &&
+        unit.currentCell_x != 0 && unit.currentCell_y != 0);
+
+    console.log(filteredUnits);
+    isSameCellBool_x = isSameCell(filteredUnits, 'currentCell_x');
+    isSameCellBool_y = isSameCell(filteredUnits, 'currentCell_y');
+    if (isSameCellBool_x != false || isSameCellBool_y != false) {
+
+        for (const unit of units) {
+            for (const keys of units.keys()) {
+                if (unit.currentCell_x == isSameCellBool_x && unit.currentCell_y == isSameCellBool_y) {
+                    units.splice(keys, 2);
+                    let unit = new Unit();
+                    unit.type = "army";
+                    unit.x = isSameCellBool_x * CELL_WIDTH;
+                    unit.y = isSameCellBool_y * CELL_HEIGHT;
+                    unit.currentCell_x = isSameCellBool_x;
+                    unit.currentCell_y = isSameCellBool_y;
+                    unit.sprite = document.getElementById('Army1');
+                    units.push(unit);
+                }
+            }
+        }
+
+        //if (index !== -1 && index2 !== -1) {
+        //units.splice(index, 1);
+        //units.splice(index2, 1);
+        console.log('sameCell_x' + isSameCellBool_x);
+        console.log('sameCell_y' + isSameCellBool_y);
+        /*let unit = new Unit();
+        unit.type = "army";
+        unit.x = ;
+        unit.y = ;
+        unit.currentCell_x = ;
+        unit.currentCell_y = ;
+        unit.sprite = document.getElementById('Army1');
+        units.push(unit);*/
+        //}
+    }
+}
+
+//this function detects if there is more than one unit in a cell
+function isSameCell(arr, prop) {
+    const valueMap = new Map();
+    for (const obj of arr) {
+        if (valueMap.has(obj[prop])) {
+            console.log(obj[prop]);
+            return obj[prop];
+        }
+        valueMap.set(obj[prop], true);
+    }
+    return false;
 }
