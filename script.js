@@ -172,8 +172,12 @@ function initializeTerrain() {
         }
         engine.move();
         if (player.amount_soldier > 1) {
-            mergeUnits();
+            mergeUnits(true);
         }
+        /*
+                if (ai.amount_soldier > 1) {
+                    mergeUnits(false);
+                }*/
     }, 1000);
 }
 
@@ -948,10 +952,8 @@ function createUnit() {
         let unit = new Unit();
 
         unit.type = "infantry";
-        unit.x = mouseCell_x * CELL_WIDTH;
-        unit.y = mouseCell_y * CELL_HEIGHT;
-        unit.currentCell_x = mouseCell_x;
-        unit.currentCell_y = mouseCell_y;
+        unit.x = Math.floor(mouseCell_x * CELL_WIDTH);
+        unit.y = Math.floor(mouseCell_y * CELL_HEIGHT);
         unit.isPlayer = true;
         player.amount_food -= 10;
         player.amount_gold -= 10;
@@ -960,7 +962,10 @@ function createUnit() {
         unit.sprite = document.getElementById('Infantry1');
 
         units.push(unit);
+        unit.updateCell(mouseCell_x, mouseCell_y);
         players.push(player);
+        console.log(units);
+        console.log(players);
         drawUnits();
     } else {
         alert('É necessário 10 de Comida e 10 de Ouro');
@@ -968,52 +973,78 @@ function createUnit() {
 }
 
 //this function uses the isSameCell to verify if there is more than one unit in a cell and then merges it turning into an army
-function mergeUnits() {
+function mergeUnits(isPlayer) {
     let isSameCellBool_x;
     let isSameCellBool_y;
 
-    let filteredUnits = units.filter(unit => unit.isPlayer === true &&
+    let filteredUnits = units.filter(unit => unit.isPlayer === isPlayer &&
         unit.currentCell_x != 0 && unit.currentCell_y != 0);
 
     console.log(filteredUnits);
     isSameCellBool_x = isSameCell(filteredUnits, 'currentCell_x');
     isSameCellBool_y = isSameCell(filteredUnits, 'currentCell_y');
-    if (isSameCellBool_x != false || isSameCellBool_y != false) {
 
+    if (isSameCellBool_x !== false || isSameCellBool_y !== false) {
         for (const unit of units) {
             for (const keys of units.keys()) {
                 if (unit.currentCell_x == isSameCellBool_x && unit.currentCell_y == isSameCellBool_y) {
-                    units.splice(keys, 2);
-                    let unit = new Unit();
-                    unit.type = "army";
-                    unit.x = isSameCellBool_x * CELL_WIDTH;
-                    unit.y = isSameCellBool_y * CELL_HEIGHT;
-                    unit.currentCell_x = isSameCellBool_x;
-                    unit.currentCell_y = isSameCellBool_y;
-                    unit.sprite = document.getElementById('Army1');
-                    units.push(unit);
+                    console.log(unit.type);
+                    let type;
+                    let sprite;
+                    if (isPlayer) {
+                        type = "army";
+                        sprite = 'Army1';
+                    } else {
+                        type = "earmy";
+                        sprite = 'eArmy1';
+                    }
+
+                    const exists = units.some(unit => unit.type === type);
+                    console.log(exists);
+                    if (!exists) {
+                        const indexinCell = units.findIndex(unitInd => unitInd.type == "infantry" && unitInd.x == isSameCellBool_x * CELL_WIDTH && unitInd.y == isSameCellBool_y);
+                        console.log("index " + indexinCell);
+                        units.splice(keys, 2);
+                        let newUnit = new Unit();
+                        newUnit.type = type;
+                        newUnit.x = Math.floor(isSameCellBool_x * CELL_WIDTH);
+                        newUnit.y = Math.floor(isSameCellBool_y * CELL_HEIGHT);
+                        newUnit.sprite = document.getElementById(sprite);
+                        newUnit.currentUnitsinArmy = 2;
+                        newUnit.attack_damage = newUnit.currentUnitsinArmy * 100;
+                        newUnit.hp = newUnit.currentUnitsinArmy * 200;
+                        console.log(newUnit.attack_damage);
+                        units.push(newUnit);
+                        newUnit.updateCell(isSameCellBool_x, isSameCellBool_y);
+                        console.log("army created");
+                        break;
+                    } else {
+                        console.log("merge");
+
+                        const found = units.find((findArmy) => findArmy.type == "army" && findArmy.currentCell_x == isSameCellBool_x && findArmy.currentCell_y == isSameCellBool_y && findArmy.currentUnitsinArmy < 6);
+                        if (found) {
+                            console.log(units);
+                            const index = units.findIndex(unit => unit.x == isSameCellBool_x * CELL_WIDTH && unit.y == isSameCellBool_y * CELL_HEIGHT);
+                            const indexUnit = units.findIndex(unitIndex => unitIndex.x = isSameCellBool_x * CELL_WIDTH && unitIndex.y == isSameCellBool_y * CELL_HEIGHT);
+                            console.log(index);
+                            if (index !== -1 && indexUnit !== -1) {
+                                units[index].currentUnitsinArmy++;
+                                units[index].hp *= units[index].currentUnitsinArmy;
+                                units[index].attack_damage *= units[index].currentUnitsinArmy;
+                                units.splice(indexUnit, 1);
+                            } else {
+                                console.error("Unit not found at the specified cell coordinates");
+                            }
+                            break;
+                        }
+                    }
                 }
             }
         }
-
-        //if (index !== -1 && index2 !== -1) {
-        //units.splice(index, 1);
-        //units.splice(index2, 1);
-        console.log('sameCell_x' + isSameCellBool_x);
-        console.log('sameCell_y' + isSameCellBool_y);
-        /*let unit = new Unit();
-        unit.type = "army";
-        unit.x = ;
-        unit.y = ;
-        unit.currentCell_x = ;
-        unit.currentCell_y = ;
-        unit.sprite = document.getElementById('Army1');
-        units.push(unit);*/
-        //}
     }
 }
 
-//this function detects if there is more than one unit in a cell
+// This function detects if there is more than one unit in a cell
 function isSameCell(arr, prop) {
     const valueMap = new Map();
     for (const obj of arr) {

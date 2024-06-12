@@ -396,7 +396,7 @@ body {
     text-align: center;
     padding: 2px 20px;
     top: 90px;
-
+    pointer-events: none;
 }
 
 .buildingMode .overlay {

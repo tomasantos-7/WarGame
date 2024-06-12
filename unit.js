@@ -17,6 +17,8 @@ class Unit {
     //status of units
     hp = 200;
     attack_damage = 100;
+    currentUnitsinArmy = 0;
+    maxPerArmy = 6;
     isDestroyed = false;
 
     isPlayer = true;
