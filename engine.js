@@ -141,7 +141,7 @@ class Engine {
         if (this.barracksAI > 0 && ai.amount_soldier < 4 && !ai.isPlayer) {
             if (ai.amount_food >= 10 && ai.amount_gold >= 10) {
                 let unit = new Unit();
-                unit.type = "infantry";
+                unit.type = "einfantry";
                 let x = this.castle_x + (Math.random() * (10 - 5) + 5);
                 let y = this.castle_y + (Math.random() * (10 - 5) + 5);
                 unit.x = Math.floor(x * CELL_WIDTH);
