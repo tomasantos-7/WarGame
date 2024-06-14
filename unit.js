@@ -50,7 +50,6 @@ class Unit {
             this.x += (path_x * normalized_x) / cost;
             this.y += (path_y * normalized_y) / cost;
         }
-        //inMovement = false;
     }
     //function that updates the variables to the current cell or the target cell
     updateCell(x, y) {

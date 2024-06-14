@@ -162,17 +162,15 @@ function initializeTerrain() {
 
     setInterval(() => {
         GetResources();
-        for (let i = 0; i < units.length; i++) {
-            let unit = units[i]
-            attack(unit.cell_x, unit.cell_y);
-        }
         engine.build();
         if (ai.amount_soldier < 4) {
             engine.createUnits();
         }
         engine.move();
 
+        enableAttack();
         //initialization of the units merge
+        attack_unit(true);
         enableMerge(true);
         enableMerge(false);
     }, 1000);
@@ -669,18 +667,33 @@ function attack(target_x, target_y) {
                         const attackInterval = setInterval(() => {
                             if (building.hp > 0) {
                                 console.log("attacking");
-                                engine.underSiege.x = target_x;
-                                engine.underSiege.y = target_y;
-                                building.hp -= unit.attack_damage;
-                                if (building.type == 'castleAI') {
-                                    maxHP = 10000;
+                                console.log(Math.floor(unit.x / CELL_WIDTH), Math.floor(unit.y / CELL_HEIGHT));
+                                console.log(target_x, target_y);
+                                let unit_cell_x = Math.floor(unit.x / CELL_WIDTH);
+                                let unit_cell_y = Math.floor(unit.y / CELL_HEIGHT);
 
-                                } else {
-                                    maxHP = 500;
+                                if (unit_cell_x == building.x && unit_cell_y == building.y ||
+                                    unit_cell_x - 1 == building.x && unit_cell_y == building.y ||
+                                    unit_cell_x - 1 == building.x && unit_cell_y - 1 == building.y ||
+                                    unit_cell_x + 1 == building.x && unit_cell_y == building.y ||
+                                    unit_cell_x + 1 == building.x && unit_cell_y + 1 == building.y ||
+                                    unit_cell_x == building.x && unit_cell_y + 1 == building.x ||
+                                    unit_cell_x == building.x && unit_cell_y + 1 == building.y) {
+                                    console.log("1");
+                                    engine.underSiege.x = target_x;
+                                    engine.underSiege.y = target_y + 2;
+                                    building.hp -= unit.attack_damage;
+                                    if (building.type == 'castleAI') {
+                                        maxHP = 10000;
+
+                                    } else {
+                                        maxHP = 500;
+                                    }
+                                    let healthValue = Math.floor((building.hp * 100) / maxHP);
+                                    console.log(healthValue);
+                                    healthBar.style.width = healthValue + '%';
                                 }
-                                let healthValue = Math.floor((building.hp * 100) / maxHP);
-                                console.log(healthValue);
-                                healthBar.style.width = healthValue + '%';
+
 
                                 if (building.hp <= 0) {
                                     clearInterval(attackInterval);
@@ -1063,7 +1076,7 @@ function mergeUnits(isPlayer) {
 }
 
 
-// This function detects if there is more than one unit in a cell
+// This function detects if there is more than one unit in a cell - for merge
 function isSameCell(arr, prop_x, prop_y) {
     const valueMap = new Map();
     for (const obj of arr) {
@@ -1083,8 +1096,106 @@ function enableMerge(isPlayer) {
     let filteredUnits = units.filter(unit => unit.isPlayer === isPlayer &&
         unit.currentCell_x != 0 && unit.currentCell_y != 0);
     let merge_x = isSameCell(filteredUnits, 'currentCell_x');
-        let merge_y = isSameCell(filteredUnits, 'currentCell_y');
-        if (merge_x != false && merge_y != false) {
-            mergeUnits(isPlayer);
+    let merge_y = isSameCell(filteredUnits, 'currentCell_y');
+    if (merge_x != false && merge_y != false) {
+        mergeUnits(isPlayer);
+    }
+}
+
+function enableAttack() {
+    for (const unitAttack of units) {
+        for (const building of buildings) {
+            if (unitAttack.currentCell_x == building.x && unitAttack.currentCell_y == building.y) {
+                attack(unitAttack.cell_x, unitAttack.cell_y);
+            }
         }
+    }
+}
+
+function attack_unit(isPlayer) {
+    console.log("1");
+    let unitE_cell_x;
+    let unitE_cell_y;
+    let unit_cell_x;
+    let unit_cell_y;
+
+    const sameCell = isSameCellUnit(units);
+    if (sameCell) {
+        const {
+            x: cellX,
+            y: cellY
+        } = sameCell;
+        console.log(cellX, cellY);
+/*
+        if (isPlayer) {
+            if (unit.isPlayer) {
+                unit_cell_x = Math.floor(unit.x / CELL_WIDTH);
+                unit_cell_y = Math.floor(unit.y / CELL_HEIGHT);
+            } else {
+                unitE_cell_x = Math.floor(unit.x / CELL_WIDTH);
+                unitE_cell_y = Math.floor(unit.y / CELL_HEIGHT);
+            }
+        } else {
+            if (unit.isPlayer) {
+                unitE_cell_x = Math.floor(unit.x / CELL_WIDTH);
+                unitE_cell_y = Math.floor(unit.y / CELL_HEIGHT);
+            } else {
+                unit_cell_x = Math.floor(unit.x / CELL_WIDTH);
+                unit_cell_y = Math.floor(unit.y / CELL_HEIGHT);
+            }
+        }*/
+        console.log("preparing...")
+        
+        console.log("2");
+        console.log(unit_cell_x - 2, unitE_cell_x)
+        if (unit_cell_x - 2 == unitE_cell_x && unit_cell_y == unitE_cell_y ||
+            unit_cell_x == unitE_cell_x && unit_cell_y - 2 == unitE_cell_y ||
+            unit_cell_x + 2 == unitE_cell_x && unit_cell_y == unitE_cell_y ||
+            unit_cell_x == unitE_cell_x && unit_cell_y + 2 == unitE_cell_y) {
+            let found_unit = units.find((unitFind) => unitFind.isPlayer == isPlayer && unitFind.currentCell_x == unitE_cell_x && unitFind.currentCell_y == unitE_cell_y)
+            console.log(found_unit);
+        }
+    }
+}
+
+//for units attack
+function isSameCellUnit(arr) {
+    const unitsMap = new Map();
+    const prop_x = 'currentCell_x';
+    const prop_y = 'currentCell_y';
+    for (const obj of arr) {
+        const key1 = `${obj[prop_x] - 2}_${obj[prop_y]}`;
+        const key2 = `${obj[prop_x]}_${obj[prop_y] - 2}`;
+        const key3 = `${obj[prop_x] + 2}_${obj[prop_y]}`;
+        const key4 = `${obj[prop_x]}_${obj[prop_y] + 2}`;
+        if (unitsMap.has(key1)) {
+            return {
+                x: obj[prop_x] - 2,
+                y: obj[prop_y]
+            }
+        }
+        unitsMap.set(key1, true);
+        if (unitsMap.has(key2)) {
+            return {
+                x: obj[prop_x],
+                y: obj[prop_y] - 2
+            }
+        }
+        unitsMap.set(key2, true);
+        if (unitsMap.has(key3)) {
+            return {
+                x: obj[prop_x] + 2,
+                y: obj[prop_y]
+            }
+        }
+        unitsMap.set(key3, true);
+        if (unitsMap.has(key4)) {
+            return {
+                x: obj[prop_x],
+                y: obj[prop_y] + 2
+            }
+        }
+        unitsMap.set(key4, true);
+    }
+    return null
 }

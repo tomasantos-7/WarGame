@@ -161,8 +161,8 @@ class Engine {
     }
 
     move() {
-        
-        if(this.underSiege.x != 0 && this.underSiege.y != 0){
+
+        if (this.underSiege.x != 0 && this.underSiege.y != 0) {
             for (let i = 0; i < units.length; i++) {
                 let unit = units[i];
                 //this condition makes sure that the only units that moves with this function is the AI´s unit and the player´s dont
@@ -180,9 +180,4 @@ class Engine {
             }
         }
     }
-
-    attack() {
-
-    }
-
 }
