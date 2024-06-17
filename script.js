@@ -163,9 +163,11 @@ function initializeTerrain() {
     setInterval(() => {
         GetResources();
         engine.build();
-        if (ai.amount_soldier < 4) {
-            engine.createUnits();
-        }
+        setTimeout(() => {
+            if (ai.amount_soldier < 4) {
+                engine.createUnits();
+            }
+        }, 5000);
         engine.move();
 
         enableAttack();
@@ -183,7 +185,7 @@ function getCastle() {
     let y = Math.floor(Math.random() * (MAP_HEIGHT / 10));
 
     placeBuildings('castle', x, y, 1, 4, 4, 'Castle1', true);
-
+    drawBuildings(x, y);
 }
 
 //function to generate resources 
@@ -233,7 +235,7 @@ function placeBuildings(type, x, y, amount_per_second, width, height, sprite_id,
                 usedcell.x = x;
                 usedcell.y = y;
                 usedcells.push(usedcell);
-                map[x][y].sprite = document.getElementById(sprite_id);
+                building.sprite = document.getElementById(sprite_id);
                 buildings.push(building);
             } else {
                 let bool = building.isInsideBuildZone(x, y)
@@ -285,7 +287,7 @@ function placeBuildings(type, x, y, amount_per_second, width, height, sprite_id,
                     usedcell.x = x;
                     usedcell.y = y;
                     usedcells.push(usedcell);
-                    map[x][y].sprite = document.getElementById(sprite_id);
+                    building.sprite = document.getElementById(sprite_id);
                     player.isPlayer = true;
                     buildings.push(building);
                     players.push(player);
@@ -319,7 +321,7 @@ function placeBuildings(type, x, y, amount_per_second, width, height, sprite_id,
                 ai_building.width = width;
                 ai_building.height = height;
                 ai_building.placeOnMap();
-                map[x][y].sprite = document.getElementById(sprite_id);
+                ai_building.sprite = document.getElementById(sprite_id);
                 buildings.push(ai_building);
 
             } else {
@@ -364,7 +366,7 @@ function placeBuildings(type, x, y, amount_per_second, width, height, sprite_id,
                 ai_building.width = width;
                 ai_building.height = height;
                 ai_building.placeOnMap();
-                map[x][y].sprite = document.getElementById(sprite_id);
+                ai_building.sprite = document.getElementById(sprite_id);
                 buildings.push(ai_building);
                 ai.isPlayer = false;
                 players.push(ai);
@@ -525,12 +527,12 @@ function drawScenery() {
             if (!sprite) {
                 continue;
             } else {
-                for (let i = 0; i < buildings.length; i++) {
-                    let building = buildings[i];
-                    if (!building.isDestroyed) {
+                //for (let i = 0; i < buildings.length; i++) {
+                //    let building = buildings[i];
+                //    if (!building.isDestroyed) {
                         ctx.drawImage(sprite, x * (CELL_WIDTH), y * (CELL_HEIGHT), sprite.naturalWidth, sprite.naturalHeight);
-                    }
-                }
+                //    }
+                //}
             }
         }
 }
@@ -585,11 +587,20 @@ function drawBuildingMode(bool) {
 
 }
 
-function drawBuildings(x, y) {
-    const ui_map = document.getElementById("ui_map");
-    let ctx = ui_map.getContext("2d");
-    let sprite = map[x][y].sprite;
-    ctx.drawImage(sprite, x * (CELL_WIDTH), y * (CELL_HEIGHT), sprite.naturalWidth, sprite.naturalHeight);
+function drawBuildings() {
+    const ui_building = document.getElementById("ui_building");
+    ui_building.setAttribute("width", MAP_WIDTH * CELL_WIDTH);
+    ui_building.setAttribute("height", MAP_HEIGHT * CELL_HEIGHT);
+    let ctx = ui_building.getContext("2d");
+    ctx.clearRect(0, 0, ui_building.width, ui_building.height);
+    //let sprite = map[x][y].sprite;
+    for (let i = 0; i < buildings.length; i++) {
+        let building = buildings[i];
+        if (!building.isDestroyed) {
+            ctx.drawImage(building.sprite, building.x * (CELL_WIDTH), building.y * (CELL_HEIGHT), building.sprite.naturalWidth, building.sprite.naturalHeight);                
+        }
+    }
+    
 }
 
 function moveUnits(x, y) {
@@ -704,9 +715,11 @@ function attack(target_x, target_y) {
                                     healthBar.style.width = `${100}%`;
                                     const ui_map = document.getElementById("ui_map");
                                     let ctx = ui_map.getContext("2d");
-                                    ctx.clearRect(target_x * CELL_WIDTH, target_y * CELL_HEIGHT, 64, 64);
-                                    drawTexture();
-                                    drawScenery();
+                                    const found_Building = buildings.findIndex(find_Building => find_Building.x == target_x && find_Building.y == target_y);
+                                    console.log("index-building: " + found_Building);
+                                    if (found_Building != -1) {
+                                        buildings.splice(found_Building, 1);
+                                    }
 
                                     healthBar.style.visibility = 'hidden';
                                     healthBarContainer.style.visibility = 'hidden';
@@ -761,7 +774,7 @@ function placeLumbermill() {
     showUnitCanvas(false);
     document.getElementById("buildingMode").classList.add("active");
     drawBuildingMode(true);
-    let canvas = document.getElementById("ui_map");
+    let canvas = document.getElementById("ui_building");
     canvas.addEventListener("click", function (e) {
         if (buildStatus.lumberCamp < 3) {
             if (player.amount_food >= 10) {
@@ -795,7 +808,7 @@ function placeQuarry() {
     showUnitCanvas(false);
     document.getElementById("buildingMode").classList.add("active");
     drawBuildingMode(true);
-    const canvas = document.getElementById("ui_map");
+    const canvas = document.getElementById("ui_building");
     canvas.addEventListener("click", function (e) {
         if (buildStatus.quarry < 3) {
             if (player.amount_food >= 10 && player.amount_wood >= 10) {
@@ -828,7 +841,7 @@ function placeBank() {
     showUnitCanvas(false);
     document.getElementById("buildingMode").classList.add("active");
     drawBuildingMode(true);
-    const canvas = document.getElementById("ui_map");
+    const canvas = document.getElementById("ui_building");
     canvas.addEventListener("click", function (e) {
         if (buildStatus.bank < 2) {
             if (player.amount_wood >= 20 && player.amount_stone >= 20) {
@@ -861,7 +874,7 @@ function placeBarracks() {
     showUnitCanvas(false);
     document.getElementById("buildingMode").classList.add("active");
     drawBuildingMode(true);
-    const canvas = document.getElementById("ui_map");
+    const canvas = document.getElementById("ui_building");
     canvas.addEventListener("click", function (e) {
         if (buildStatus.barracks < 3) {
             if (player.amount_food >= 10 && player.amount_stone >= 15) {
@@ -1114,88 +1127,95 @@ function enableAttack() {
 
 function attack_unit(isPlayer) {
     console.log("1");
-    let unitE_cell_x;
-    let unitE_cell_y;
-    let unit_cell_x;
-    let unit_cell_y;
-
-    const sameCell = isSameCellUnit(units);
-    if (sameCell) {
-        const {
-            x: cellX,
-            y: cellY
-        } = sameCell;
-        console.log(cellX, cellY);
-/*
+    let unitE_cell_x = 0;
+    let unitE_cell_y = 0;
+    let unit_cell_x = 0;
+    let unit_cell_y = 0;
+    for (const unit of units) {
         if (isPlayer) {
             if (unit.isPlayer) {
-                unit_cell_x = Math.floor(unit.x / CELL_WIDTH);
-                unit_cell_y = Math.floor(unit.y / CELL_HEIGHT);
+                unit_cell_x = unit.currentCell_x;
+                unit_cell_y = unit.currentCell_y;
             } else {
-                unitE_cell_x = Math.floor(unit.x / CELL_WIDTH);
-                unitE_cell_y = Math.floor(unit.y / CELL_HEIGHT);
+                unitE_cell_x = unit.currentCell_x;
+                unitE_cell_y = unit.currentCell_y;
             }
         } else {
             if (unit.isPlayer) {
-                unitE_cell_x = Math.floor(unit.x / CELL_WIDTH);
-                unitE_cell_y = Math.floor(unit.y / CELL_HEIGHT);
+                unitE_cell_x = unit.currentCell_x;
+                unitE_cell_y = unit.currentCell_y;
             } else {
-                unit_cell_x = Math.floor(unit.x / CELL_WIDTH);
-                unit_cell_y = Math.floor(unit.y / CELL_HEIGHT);
+                unit_cell_x = unit.currentCell_x;
+                unit_cell_y = unit.currentCell_y;
             }
-        }*/
+        }
         console.log("preparing...")
-        
+
         console.log("2");
-        console.log(unit_cell_x - 2, unitE_cell_x)
+        console.log(unit_cell_x - 2, unitE_cell_x);
+        console.log(units);
         if (unit_cell_x - 2 == unitE_cell_x && unit_cell_y == unitE_cell_y ||
             unit_cell_x == unitE_cell_x && unit_cell_y - 2 == unitE_cell_y ||
             unit_cell_x + 2 == unitE_cell_x && unit_cell_y == unitE_cell_y ||
             unit_cell_x == unitE_cell_x && unit_cell_y + 2 == unitE_cell_y) {
-            let found_unit = units.find((unitFind) => unitFind.isPlayer == isPlayer && unitFind.currentCell_x == unitE_cell_x && unitFind.currentCell_y == unitE_cell_y)
-            console.log(found_unit);
-        }
-    }
-}
+            let healthBarBuild = document.getElementById("healthBar");
+            let healthBarContainerBuild = document.getElementById("healthBar-container");
+            healthBarBuild.style.visibility = 'hidden';
+            healthBarContainerBuild.style.visibility = 'hidden';
 
-//for units attack
-function isSameCellUnit(arr) {
-    const unitsMap = new Map();
-    const prop_x = 'currentCell_x';
-    const prop_y = 'currentCell_y';
-    for (const obj of arr) {
-        const key1 = `${obj[prop_x] - 2}_${obj[prop_y]}`;
-        const key2 = `${obj[prop_x]}_${obj[prop_y] - 2}`;
-        const key3 = `${obj[prop_x] + 2}_${obj[prop_y]}`;
-        const key4 = `${obj[prop_x]}_${obj[prop_y] + 2}`;
-        if (unitsMap.has(key1)) {
-            return {
-                x: obj[prop_x] - 2,
-                y: obj[prop_y]
+            console.log("3");
+            const found_unitE = units.find(unitFindE => unitFindE.isPlayer == !isPlayer && unitFindE.currentCell_x == unitE_cell_x && unitFindE.currentCell_y == unitE_cell_y);
+            const found_unit = units.find(unitFind => unitFind.isPlayer == isPlayer && unitFind.currentCell_x == unit_cell_x && unitFind.currentCell_y == unit_cell_y);
+            console.log(found_unitE);
+            console.log(found_unit);
+            console.log(units);
+
+            let maxHP = 500;
+            let healthBarContainer = document.createElement("div");
+            let healthBar = document.createElement("div");
+            healthBar.setAttribute("id", "healthBarUnit");
+            healthBar.setAttribute("class", "healthBar");
+            healthBarContainer.setAttribute("id", "healthBarUnit-container");
+            healthBarContainer.setAttribute("class", "healthBar-container");
+            healthBarContainer.appendChild(healthBar);
+
+            healthBarContainer.style.top = `${unitE_cell_x * CELL_HEIGHT}px`;
+            healthBarContainer.style.left = `${(unitE_cell_y * CELL_WIDTH) - 5}px`;
+            healthBar.style.visibility = 'visible';
+            healthBarContainer.style.visibility = 'visible';
+
+            let max = 100 + (found_unit.attack_damage / 2);
+            let min = 100;
+            let maxE = 100 + (found_unitE.attack_damage / 2);
+            let minE = 100;
+            let damageRand = Math.floor(Math.random() * (max - min) + min);
+            let damageRandE = Math.floor(Math.random() * (maxE - minE) + minE);
+            found_unit.attack_damage = damageRand;
+            found_unitE.attack_damage = damageRandE;
+            found_unitE.hp -= found_unit.attack_damage;
+            found_unit.hp -= found_unitE.attack_damage;
+
+            console.log("attack Unit");
+            let healthValue = Math.floor((building.hp * 100) / maxHP);
+            console.log(healthValue);
+            healthBar.style.width = healthValue + '%';
+
+            console.log("4");
+            console.log(found_unitE.hp);
+
+            if (found_unitE.hp <= 0) {
+                const found_indexE = units.findIndex(findIndexE => findIndexE.isPlayer == !isPlayer && findIndexE.currentCell_x == unitE_cell_x && findIndexE.currentCell_y == unitE_cell_y);
+                ai.amount_soldier -= found_unitE.currentUnitsinArmy;
+                console.log(found_indexE);
+                units.splice(found_indexE, 1);
+            }
+
+            if (found_unit.hp <= 0) {
+                const found_index = units.findIndex(findIndex => findIndex.isPlayer == isPlayer && findIndex.currentCell_x == unit_cell_x && findIndex.currentCell_y == unit_cell_y);
+                ai.amount_soldier -= found_unit.currentUnitsinArmy;
+                console.log(found_index);
+                units.splice(found_index, 1);
             }
         }
-        unitsMap.set(key1, true);
-        if (unitsMap.has(key2)) {
-            return {
-                x: obj[prop_x],
-                y: obj[prop_y] - 2
-            }
-        }
-        unitsMap.set(key2, true);
-        if (unitsMap.has(key3)) {
-            return {
-                x: obj[prop_x] + 2,
-                y: obj[prop_y]
-            }
-        }
-        unitsMap.set(key3, true);
-        if (unitsMap.has(key4)) {
-            return {
-                x: obj[prop_x],
-                y: obj[prop_y] + 2
-            }
-        }
-        unitsMap.set(key4, true);
     }
-    return null
 }

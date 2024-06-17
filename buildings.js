@@ -16,6 +16,7 @@ class Building {
     castle_y = 0;
     isDestroyed = false;
     isPlayer = true;
+    sprite = null;
 
     placeOnMap() {
 
