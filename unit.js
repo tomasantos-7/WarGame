@@ -15,7 +15,8 @@ class Unit {
     cell_x = 0;
     cell_y = 0;
     //status of units
-    hp = 200;
+    maxHP = 500;
+    hp = 500;
     attack_damage = 100;
     currentUnitsinArmy = 0;
     maxPerArmy = 6;

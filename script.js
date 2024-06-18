@@ -9,6 +9,7 @@ const units = [];
 const usedcells = [];
 let inMovement = false;
 let delta = 0;
+let activateRecovery = true;
 
 class UsedCells_Highlight {
     x = 0;
@@ -29,7 +30,7 @@ let ai_building = new Building();
 let engine = new Engine();
 let buildStatus = new buildingStatus();
 
-//cria um array de arrays, com o tamanho (MAP_WIDTH x MAP_HEIGHT) tudo inicializado a 0;
+//create an array of arrays, with the size (MAP_WIDTH * MAP_HEIGHT) all initialized to 0;
 const map = new Array(MAP_WIDTH).fill(0).map(() => new Array(MAP_HEIGHT).fill(0));
 const textureMap = new Map();
 
@@ -169,10 +170,13 @@ function initializeTerrain() {
             }
         }, 5000);
         engine.move();
-
-        enableAttack();
+        recoverHP(activateRecovery);
         //initialization of the units merge
-        attack_unit(true);
+
+        setTimeout(() => {
+            attack(true);
+        }, 2000);
+
         enableMerge(true);
         enableMerge(false);
     }, 1000);
@@ -527,12 +531,7 @@ function drawScenery() {
             if (!sprite) {
                 continue;
             } else {
-                //for (let i = 0; i < buildings.length; i++) {
-                //    let building = buildings[i];
-                //    if (!building.isDestroyed) {
-                        ctx.drawImage(sprite, x * (CELL_WIDTH), y * (CELL_HEIGHT), sprite.naturalWidth, sprite.naturalHeight);
-                //    }
-                //}
+                ctx.drawImage(sprite, x * (CELL_WIDTH), y * (CELL_HEIGHT), sprite.naturalWidth, sprite.naturalHeight);
             }
         }
 }
@@ -597,10 +596,10 @@ function drawBuildings() {
     for (let i = 0; i < buildings.length; i++) {
         let building = buildings[i];
         if (!building.isDestroyed) {
-            ctx.drawImage(building.sprite, building.x * (CELL_WIDTH), building.y * (CELL_HEIGHT), building.sprite.naturalWidth, building.sprite.naturalHeight);                
+            ctx.drawImage(building.sprite, building.x * (CELL_WIDTH), building.y * (CELL_HEIGHT), building.sprite.naturalWidth, building.sprite.naturalHeight);
         }
     }
-    
+
 }
 
 function moveUnits(x, y) {
@@ -647,101 +646,7 @@ function drawUnits() {
         let unit = units[i];
         if (!unit.isDestroyed) {
             //unit gets drawn centered in cell
-            //let draw_x = unit.x - unit.sprite.naturalWidth / 2 + CELL_WIDTH / 2;
-            //let draw_y = unit.y - unit.sprite.naturalHeight / 2 + CELL_HEIGHT / 2;
             ctx.drawImage(unit.sprite, unit.x, unit.y, unit.sprite.naturalWidth, unit.sprite.naturalHeight);
-        }
-    }
-}
-
-const activeAttacks = new Map();
-
-function attack(target_x, target_y) {
-    let maxHP = 500;
-    let healthBar = document.getElementById("healthBar");
-    let healthBarContainer = document.getElementById("healthBar-container");
-
-    for (const unit of units) {
-        if (unit.isPlayer) {
-            for (const building of buildings) {
-                if (!building.isDestroyed && !building.isPlayer &&
-                    building.x === target_x && building.y === target_y &&
-                    unit.currentCell_x === target_x && unit.currentCell_y === target_y && building.type != '') {
-                    console.log(building);
-                    healthBarContainer.style.top = `${target_y * CELL_HEIGHT}px`;
-                    healthBarContainer.style.left = `${(target_x * CELL_WIDTH) - 5}px`;
-                    healthBar.style.visibility = 'visible';
-                    healthBarContainer.style.visibility = 'visible';
-
-                    // Check if the building is already under attack
-                    if (!activeAttacks.has(building)) {
-                        const attackInterval = setInterval(() => {
-                            if (building.hp > 0) {
-                                console.log("attacking");
-                                console.log(Math.floor(unit.x / CELL_WIDTH), Math.floor(unit.y / CELL_HEIGHT));
-                                console.log(target_x, target_y);
-                                let unit_cell_x = Math.floor(unit.x / CELL_WIDTH);
-                                let unit_cell_y = Math.floor(unit.y / CELL_HEIGHT);
-
-                                if (unit_cell_x == building.x && unit_cell_y == building.y ||
-                                    unit_cell_x - 1 == building.x && unit_cell_y == building.y ||
-                                    unit_cell_x - 1 == building.x && unit_cell_y - 1 == building.y ||
-                                    unit_cell_x + 1 == building.x && unit_cell_y == building.y ||
-                                    unit_cell_x + 1 == building.x && unit_cell_y + 1 == building.y ||
-                                    unit_cell_x == building.x && unit_cell_y + 1 == building.x ||
-                                    unit_cell_x == building.x && unit_cell_y + 1 == building.y) {
-                                    console.log("1");
-                                    engine.underSiege.x = target_x;
-                                    engine.underSiege.y = target_y + 2;
-                                    building.hp -= unit.attack_damage;
-                                    if (building.type == 'castleAI') {
-                                        maxHP = 10000;
-
-                                    } else {
-                                        maxHP = 500;
-                                    }
-                                    let healthValue = Math.floor((building.hp * 100) / maxHP);
-                                    console.log(healthValue);
-                                    healthBar.style.width = healthValue + '%';
-                                }
-
-
-                                if (building.hp <= 0) {
-                                    clearInterval(attackInterval);
-                                    activeAttacks.delete(building, attackInterval);
-                                    building.isDestroyed = true;
-                                    map[target_x][target_y].sprite = null;
-                                    engine[building.type]--;
-                                    healthBar.style.width = `${100}%`;
-                                    const ui_map = document.getElementById("ui_map");
-                                    let ctx = ui_map.getContext("2d");
-                                    const found_Building = buildings.findIndex(find_Building => find_Building.x == target_x && find_Building.y == target_y);
-                                    console.log("index-building: " + found_Building);
-                                    if (found_Building != -1) {
-                                        buildings.splice(found_Building, 1);
-                                    }
-
-                                    healthBar.style.visibility = 'hidden';
-                                    healthBarContainer.style.visibility = 'hidden';
-                                    console.log("destroyed");
-                                    if (building.type == 'castleAI') {
-                                        console.log('You Won');
-                                        document.getElementById("winLose").classList.add("active");
-                                        document.body.style.overflow = "hidden";
-                                        document.getElementById("win-Text").style.visibility = "visible";
-                                        document.getElementById("playAgainBtn").style.visibility = "visible";
-                                        document.getElementById("exit").style.visibility = "visible";
-                                    }
-                                }
-                            }
-                        }, 2000);
-
-                        // Add the building to the map of active attacks
-
-                        activeAttacks.set(building, attackInterval);
-                    }
-                }
-            }
         }
     }
 }
@@ -994,7 +899,6 @@ function createUnit() {
         alert('É necessário 10 de Comida e 10 de Ouro');
     }
 }
-
 //this function uses the isSameCell to verify if there is more than one unit in a cell and then merges it turning into an army
 function mergeUnits(isPlayer) {
     let type;
@@ -1059,6 +963,7 @@ function mergeUnits(isPlayer) {
                 newUnit.currentUnitsinArmy = 2;
                 newUnit.attack_damage = newUnit.currentUnitsinArmy * 100;
                 newUnit.hp = newUnit.currentUnitsinArmy * 200;
+                newUnit.maxHP = newUnit.hp;
                 units.push(newUnit);
                 //update the cells to the units array
                 newUnit.updateCell(cellX, cellY);
@@ -1079,6 +984,7 @@ function mergeUnits(isPlayer) {
                     units.splice(infIndex, 1);
                     units[armyIndex].currentUnitsinArmy += 1;
                     units[armyIndex].hp = units[armyIndex].currentUnitsinArmy * 200;
+                    units[armyIndex].maxHP = units[armyIndex].hp;
                     units[armyIndex].attack_damage = units[armyIndex].currentUnitsinArmy * 100;
                 } else {
                     console.error("Unit not found at the specified cell coordinates");
@@ -1087,9 +993,7 @@ function mergeUnits(isPlayer) {
         }
     }
 }
-
-
-// This function detects if there is more than one unit in a cell - for merge
+// This function detects if there is more than one unit in a cell - for merge;
 function isSameCell(arr, prop_x, prop_y) {
     const valueMap = new Map();
     for (const obj of arr) {
@@ -1104,7 +1008,7 @@ function isSameCell(arr, prop_x, prop_y) {
     }
     return null;
 }
-
+//this function enables the merge function giving base values needed for the calculations;
 function enableMerge(isPlayer) {
     let filteredUnits = units.filter(unit => unit.isPlayer === isPlayer &&
         unit.currentCell_x != 0 && unit.currentCell_y != 0);
@@ -1114,28 +1018,26 @@ function enableMerge(isPlayer) {
         mergeUnits(isPlayer);
     }
 }
-
-function enableAttack() {
-    for (const unitAttack of units) {
-        for (const building of buildings) {
-            if (unitAttack.currentCell_x == building.x && unitAttack.currentCell_y == building.y) {
-                attack(unitAttack.cell_x, unitAttack.cell_y);
-            }
-        }
-    }
-}
-
-function attack_unit(isPlayer) {
+//this is a dinamic function that handles the attack of the player and the ai to units, we check if a unit is in the range of the unit that is attacking and with that data we can define if there is an attack or not, 
+//in case of attack we will uses the base attack_damage value as the base damage, and then we use the attack_damage of the unit divide by 2 use a random to define how much damage will it do, with that damage we add to the base damage, the unit with more damage wins;
+function attack(isPlayer) {
     console.log("1");
     let unitE_cell_x = 0;
     let unitE_cell_y = 0;
     let unit_cell_x = 0;
     let unit_cell_y = 0;
+    let maxHP = 0;
+    let maxHPe = 0;
+    let unit_x;
+    let unit_y;
     for (const unit of units) {
+        //here we atribute the coords/cells values that we will use to work in this function
         if (isPlayer) {
             if (unit.isPlayer) {
                 unit_cell_x = unit.currentCell_x;
                 unit_cell_y = unit.currentCell_y;
+                unit_x = Math.floor(unit.x / CELL_WIDTH);
+                unit_y = Math.floor(unit.y / CELL_HEIGHT);
             } else {
                 unitE_cell_x = unit.currentCell_x;
                 unitE_cell_y = unit.currentCell_y;
@@ -1147,6 +1049,8 @@ function attack_unit(isPlayer) {
             } else {
                 unit_cell_x = unit.currentCell_x;
                 unit_cell_y = unit.currentCell_y;
+                unit_x = Math.floor(unit.x / CELL_WIDTH);
+                unit_y = Math.floor(unit.y / CELL_HEIGHT);
             }
         }
         console.log("preparing...")
@@ -1154,36 +1058,27 @@ function attack_unit(isPlayer) {
         console.log("2");
         console.log(unit_cell_x - 2, unitE_cell_x);
         console.log(units);
+        //check if there any enemy unit in range
         if (unit_cell_x - 2 == unitE_cell_x && unit_cell_y == unitE_cell_y ||
             unit_cell_x == unitE_cell_x && unit_cell_y - 2 == unitE_cell_y ||
             unit_cell_x + 2 == unitE_cell_x && unit_cell_y == unitE_cell_y ||
             unit_cell_x == unitE_cell_x && unit_cell_y + 2 == unitE_cell_y) {
-            let healthBarBuild = document.getElementById("healthBar");
-            let healthBarContainerBuild = document.getElementById("healthBar-container");
-            healthBarBuild.style.visibility = 'hidden';
-            healthBarContainerBuild.style.visibility = 'hidden';
+            activateRecovery = false;
 
             console.log("3");
+            //search in the array for the units in combat
             const found_unitE = units.find(unitFindE => unitFindE.isPlayer == !isPlayer && unitFindE.currentCell_x == unitE_cell_x && unitFindE.currentCell_y == unitE_cell_y);
             const found_unit = units.find(unitFind => unitFind.isPlayer == isPlayer && unitFind.currentCell_x == unit_cell_x && unitFind.currentCell_y == unit_cell_y);
             console.log(found_unitE);
             console.log(found_unit);
             console.log(units);
+            //display the health bars according to the hp values, !!!!!!!!!the health bar just appears during the function execution and then disappears, so it isnt possible to see it
+            showHealthBar(found_unitE.isPlayer, 'unit', found_unitE.currentCell_x, found_unitE.currentCell_y, found_unitE.hp, found_unitE.maxHP);
+            showHealthBar(found_unit.isPlayer, 'unit', found_unit.currentCell_x, found_unit.currentCell_y, found_unit.hp, found_unit.maxHP);
 
-            let maxHP = 500;
-            let healthBarContainer = document.createElement("div");
-            let healthBar = document.createElement("div");
-            healthBar.setAttribute("id", "healthBarUnit");
-            healthBar.setAttribute("class", "healthBar");
-            healthBarContainer.setAttribute("id", "healthBarUnit-container");
-            healthBarContainer.setAttribute("class", "healthBar-container");
-            healthBarContainer.appendChild(healthBar);
-
-            healthBarContainer.style.top = `${unitE_cell_x * CELL_HEIGHT}px`;
-            healthBarContainer.style.left = `${(unitE_cell_y * CELL_WIDTH) - 5}px`;
-            healthBar.style.visibility = 'visible';
-            healthBarContainer.style.visibility = 'visible';
-
+            //define the values and make the calculations needed for the combat between the two units
+            maxHP = found_unit.maxHP;
+            maxHPe = found_unitE.maxHP;
             let max = 100 + (found_unit.attack_damage / 2);
             let min = 100;
             let maxE = 100 + (found_unitE.attack_damage / 2);
@@ -1196,18 +1091,20 @@ function attack_unit(isPlayer) {
             found_unit.hp -= found_unitE.attack_damage;
 
             console.log("attack Unit");
-            let healthValue = Math.floor((building.hp * 100) / maxHP);
-            console.log(healthValue);
-            healthBar.style.width = healthValue + '%';
 
             console.log("4");
             console.log(found_unitE.hp);
-
+            //check if any of the units have been killed if any of them got the hp bellow 0, the function restarts and gives more damage according to the values calculated before;
             if (found_unitE.hp <= 0) {
                 const found_indexE = units.findIndex(findIndexE => findIndexE.isPlayer == !isPlayer && findIndexE.currentCell_x == unitE_cell_x && findIndexE.currentCell_y == unitE_cell_y);
                 ai.amount_soldier -= found_unitE.currentUnitsinArmy;
                 console.log(found_indexE);
                 units.splice(found_indexE, 1);
+                const ui_units = document.getElementById("ui_units");
+                let ctx = ui_units.getContext("2d");
+                //ctx.clearRect(0, 0, ui_units.width, ui_units.height);
+                //drawUnits();
+                activateRecovery = true;
             }
 
             if (found_unit.hp <= 0) {
@@ -1215,7 +1112,151 @@ function attack_unit(isPlayer) {
                 ai.amount_soldier -= found_unit.currentUnitsinArmy;
                 console.log(found_index);
                 units.splice(found_index, 1);
+                activateRecovery = true;
             }
+        }
+    }
+
+    //this second chunk of code is the attacking logic to buildings;
+    for (const building of buildings) {
+
+        if (building.isPlayer != isPlayer) {
+            //here we check if there is any unit in the radius of each building
+            if (unit_x == building.x && unit_y == building.y ||
+                unit_x - 1 == building.x && unit_y == building.y ||
+                unit_x - 1 == building.x && unit_y - 1 == building.y ||
+                unit_x + 1 == building.x && unit_y == building.y ||
+                unit_x + 1 == building.x && unit_y + 1 == building.y ||
+                unit_x == building.x && unit_y + 1 == building.x ||
+                unit_x == building.x && unit_y + 1 == building.y) {
+                //we check the arrays and look for the unit that is attacking and the attacked building
+                const found_unit = units.find(unitFind => unitFind.isPlayer == isPlayer && unitFind.currentCell_x == unit_cell_x && unitFind.currentCell_y == unit_cell_y);
+                const found_Building = buildings.find(buildFind => buildFind.isPlayer != isPlayer && buildFind.x == building.x && buildFind.y == building.y);
+                console.log(found_Building);
+                console.log("untittt" + found_unit);
+                console.log("attacking building");
+                if (found_Building.type == 'castle' || found_Building.type == 'castleAI') {
+                    maxHP = 10000;
+                } else {
+                    maxHP = 500;
+                }
+                //display the health Bar with the updated hp value
+                showHealthBar(false, 'building', found_Building.x, found_Building.y, found_Building.hp, maxHP);
+                if (found_unit.type == "army") {
+                    let max = 100 + (found_unit.attack_damage / 2);
+                    let min = 100;
+                    let damageRand = Math.floor(Math.random() * (max - min) + min);
+                    found_unit.attack_damage = damageRand;
+                } else {
+                    found_unit.attack_damage = 100;
+                }
+                //remove hp according to the amount of attack_damage of the unit attacking
+                found_Building.hp -= found_unit.attack_damage;
+                //send the coords to the ai in order to make them go to the attacking building to defend it
+                engine.underSiege.x = found_Building.x + 2;
+                engine.underSiege.y = found_Building.y;
+                //when the building is destroyed we remove it from the array and redraw the buildings canvas, if the destroyed building is castle depending on wich castle was destroyed the player wins or looses
+                if (found_Building.hp <= 0) {
+                    const found_BuildIndex = buildings.findIndex(findBuildIndex => findBuildIndex.x == building.x && findBuildIndex.y == building.y);
+                    console.log("index" + found_BuildIndex);
+                    if (found_BuildIndex != -1) {
+                        buildings.splice(found_BuildIndex, 1);
+                        const ui_building = document.getElementById("ui_building");
+                        let ctx = ui_building.getContext("2d");
+                        ctx.clearRect(0, 0, ui_building.width, ui_building.height);
+                        drawBuildings();
+                        if (found_Building.type == 'castleAI') {
+                            console.log('You Won');
+                            document.getElementById("winLose").classList.add("active");
+                            document.body.style.overflow = "hidden";
+                            document.getElementById("win-Text").style.visibility = "visible";
+                            document.getElementById("playAgainBtn").style.visibility = "visible";
+                            document.getElementById("exit").style.visibility = "visible";
+                        }
+                        if (found_Building.type == 'castle') {
+                            console.log('You Lost');
+                            document.getElementById("winLose").classList.add("active");
+                            document.body.style.overflow = "hidden";
+                            document.getElementById("lose-Text").style.visibility = "visible";
+                            document.getElementById("playAgainBtn").style.visibility = "visible";
+                            document.getElementById("exit").style.visibility = "visible";
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+
+//this function makes the unit recover 20% of its health while it isnt on combat
+function recoverHP(active) {
+    if (active) {
+        for (let i = 0; i < units.length; i++) {
+            let unit = units[i];
+            //this is the amount to recover we calculate how much is 20% of the maximum HP of the unit
+            let amountToRecover = (unit.maxHP * 20) / 100;
+            if (unit.hp < unit.maxHP) {
+                unit.hp += amountToRecover;
+            } else {
+                unit.hp = unit.maxHP;
+            }
+        }
+    }
+}
+//this function creates the healthBar to display the hp values of the attacked buildings or units
+function showHealthBar(isPlayer, underAttack, cell_x, cell_y, hp, maxHP) {
+    const ui_building = document.getElementById("ui_building");
+    const ui_units = document.getElementById("ui_units");
+    let ctx_building = ui_building.getContext("2d");
+    let ctx_units = ui_units.getContext("2d");
+    let health = (hp * 60) / maxHP;
+
+    let x = Math.floor(cell_x * CELL_WIDTH);
+    let y = Math.floor(cell_y * CELL_HEIGHT);
+
+    //check if there is a building under attack
+    if (underAttack == 'building') {
+        let color;
+        if (!isPlayer) {
+            //AI´s healthBar color
+            color = "rgb(220, 0, 0)";
+        } else {
+            //Player´s healthBar color
+            color = "rgb(0, 0, 220)";
+        }
+        //paint the health bar on the building canvas
+        if (health > 0) {
+            ctx_building.fillStyle = "gray";
+            ctx_building.fillRect(x, y - 16, 60, 9);
+            ctx_building.fillStyle = color;
+            ctx_building.fillRect(x, y - 15, health, 7);
+        } else {
+            ctx_building.fillStyle = "gray";
+            ctx_building.fillRect(x, y - 16, 60, 9);
+            ctx_building.fillStyle = color;
+            ctx_building.fillRect(x, y - 15, 0, 7);
+        }
+    }
+    //check if there is a unit under attack
+    if (underAttack == 'unit') {
+        let color;
+        if (!isPlayer) {
+            color = "rgb(220, 0, 0)";
+        } else {
+            color = "rgb(0, 0, 220)";
+        }
+        //paint the health bar on the units canvas
+        if (health > 0) {
+            ctx_units.fillStyle = "gray";
+            ctx_units.fillRect(x, y - 16, 60, 9);
+            ctx_units.fillStyle = color;
+            ctx_units.fillRect(x, y - 15, health, 7);
+        } else {
+            ctx_units.fillStyle = "gray";
+            ctx_units.fillRect(x, y - 16, 60, 9);
+            ctx_units.fillStyle = color;
+            ctx_units.fillRect(x, y - 15, 0, 7);
         }
     }
 }
