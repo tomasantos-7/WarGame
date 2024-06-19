@@ -437,23 +437,6 @@ body {
     opacity: 1;
 }
 
-.healthBar-container {
-    position: relative;
-    width: 70px;
-    height: 5px;
-    background-color: #ddd;
-    border: 1px solid #000;
-    border-radius: 0px;
-    visibility: hidden;
-}
-
-.healthBar-container .healthBar {
-    height: 100%;
-    background-color: #cc2f2f;
-    width: 100%;
-    visibility: hidden;
-}
-
 .winLose{
     position: fixed;
     text-align: center;
@@ -471,6 +454,7 @@ body {
     text-align: center;
     margin: auto;
     width: 40%;
+    height: 40%;
     padding: 2px 20px;
     top: 350px;
     background-color: #E6CA8E;
@@ -509,6 +493,8 @@ body {
 
 .lose-Text{
     display: grid;
+    position: relative;
+    top: -205px;
     visibility: hidden;
 }
 
@@ -531,6 +517,7 @@ body {
     margin: auto;
     display: inline;
     bottom: 20px;
+    top: -210px;
     width: 250px;
 }
 

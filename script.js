@@ -71,7 +71,6 @@ function drawFrame(timestamp) {
         drawScenery();
     }
 
-
     if (inMovement == true) {
         drawUnits();
     }
@@ -1090,10 +1089,7 @@ function attack(isPlayer) {
             found_unitE.hp -= found_unit.attack_damage;
             found_unit.hp -= found_unitE.attack_damage;
 
-            console.log("attack Unit");
-
             console.log("4");
-            console.log(found_unitE.hp);
             //check if any of the units have been killed if any of them got the hp bellow 0, the function restarts and gives more damage according to the values calculated before;
             if (found_unitE.hp <= 0) {
                 const found_indexE = units.findIndex(findIndexE => findIndexE.isPlayer == !isPlayer && findIndexE.currentCell_x == unitE_cell_x && findIndexE.currentCell_y == unitE_cell_y);
